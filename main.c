@@ -33,45 +33,59 @@ int main(void)
     };
 
     player_t curr_player = PLAYER_1;
-    player_t winner;
+    bool game_running = true;
 
     quartz_camera2D camera = quartz_init_camera2D(800, 600);
 
     quartz_render2D_init();
     quartz_render2D_set_camera(&camera);
 
-    while(quartz_update() && !board_is_final(&b, &winner))
+    while(quartz_update())
     {
         quartz_ivec2 mouse_screen_pos = quartz_get_mouse_pos();
         quartz_vec2 mouse_pos = quartz_camera2D_to_world_through_viewport(&camera, mouse_screen_pos, quartz_get_screen_viewport());
 
-        int x = -1, y = -1;
-
-        if(!is_ai[curr_player])
+        if(!game_running)
         {
-            if(quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
+            if(quartz_is_key_down(QUARTZ_KEY_SPACE))
             {
-                quartz_vec2 map_origin = { -CELL_DISPLAY_SIZE/2.0f * b.size, CELL_DISPLAY_SIZE/2.0f * b.size };
-                quartz_vec2 diff = { mouse_pos.x - map_origin.x, mouse_pos.y - map_origin.y };
-
-                diff.x = floor(diff.x / CELL_DISPLAY_SIZE);
-                diff.y = floor(-diff.y / CELL_DISPLAY_SIZE);
-
-                if(diff.x >= 0 && diff.x < CELL_DISPLAY_SIZE && diff.y >= 0 && diff.y < CELL_DISPLAY_SIZE)
-                {
-                    x = diff.x;
-                    y = diff.y;
-                }
+                game_running = true;
+                curr_player = PLAYER_1;
+                board_clear(&b);
             }
         }
+        else if(board_is_final(&b, NULL))
+            game_running = false;
         else
-            ai_next_move(&b, &x, &y, curr_player);
-        
-
-        if(x != -1 && y != -1 && board_get_cell(&b, x, y) == NO_PLAYER)
         {
-            board_set_cell(&b, x, y, curr_player);
-            curr_player = curr_player == PLAYER_1 ? PLAYER_2 : PLAYER_1;
+            int x = -1, y = -1;
+
+            if(!is_ai[curr_player])
+            {
+                if(quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
+                {
+                    quartz_vec2 map_origin = { -CELL_DISPLAY_SIZE/2.0f * b.size, CELL_DISPLAY_SIZE/2.0f * b.size };
+                    quartz_vec2 diff = { mouse_pos.x - map_origin.x, mouse_pos.y - map_origin.y };
+
+                    diff.x = floor(diff.x / CELL_DISPLAY_SIZE);
+                    diff.y = floor(-diff.y / CELL_DISPLAY_SIZE);
+
+                    if(diff.x >= 0 && diff.x < CELL_DISPLAY_SIZE && diff.y >= 0 && diff.y < CELL_DISPLAY_SIZE)
+                    {
+                        x = diff.x;
+                        y = diff.y;
+                    }
+                }
+            }
+            else
+                ai_next_move(&b, &x, &y, curr_player);
+            
+
+            if(x != -1 && y != -1 && board_get_cell(&b, x, y) == NO_PLAYER)
+            {
+                board_set_cell(&b, x, y, curr_player);
+                curr_player = curr_player == PLAYER_1 ? PLAYER_2 : PLAYER_1;
+            }
         }
 
         quartz_clear(QUARTZ_BLACK);
@@ -93,19 +107,6 @@ int main(void)
         }
 
         quartz_render2D_flush();
-    }
-
-    switch(winner)
-    {
-        case NO_PLAYER:
-            printf("Draw!\n");
-            break;
-        case PLAYER_1:
-            printf("Player 1 won!\n");
-            break;
-        case PLAYER_2:
-            printf("Player 2 won!\n");
-            break;
     }
 
     board_free(&b);
