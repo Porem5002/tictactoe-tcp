@@ -125,3 +125,46 @@ void board_free(board_t* b)
     free(b->cells);
     b->cells = NULL;
 }
+
+game_t game_make(int board_size, player_t starting_player)
+{
+    game_t game = {
+        .running = true,
+        .starting_player = starting_player,
+        .curr_player = starting_player,
+        .board = board_make(board_size)
+    };
+
+    return game;
+}
+
+void game_restart(game_t* game)
+{
+    game->running = true;
+    game->curr_player = game->starting_player;
+    board_clear(&game->board);
+}
+
+bool game_do_move(game_t* game, int x, int y)
+{
+    if(game->running && board_get_cell(&game->board, x, y) == NO_PLAYER)
+    {
+        board_set_cell(&game->board, x, y, game->curr_player);
+        game->curr_player = game->curr_player == PLAYER_1 ? PLAYER_2 : PLAYER_1;
+        
+        if(board_is_final(&game->board, NULL))
+            game->running = false;
+        
+        return true;
+    }
+
+    return false;
+}
+
+void game_free(game_t* game)
+{
+    game->running = false;
+    game->starting_player = NO_PLAYER;
+    game->curr_player = NO_PLAYER;
+    board_free(&game->board);
+}
