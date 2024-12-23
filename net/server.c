@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <winsock2.h>
 
-#include "..\base.h"
+#include "..\src\base.h"
 #include "net.h"
 
 int main()

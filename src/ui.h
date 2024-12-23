@@ -5,7 +5,7 @@
 
 #include "base.h"
 
-#include "external/quartz.h"
+#include "../external/quartz.h"
 
 typedef struct
 {

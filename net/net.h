@@ -3,7 +3,7 @@
 
 #include <winsock2.h>
 
-#include "..\base.h"
+#include "..\src\base.h"
 
 #define COMPACT_PACKET_SIZE 4
 

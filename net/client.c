@@ -3,9 +3,9 @@
 #include <assert.h>
 #include <winsock2.h>
 
-#include "..\base.h"
-#include "..\ai.h"
-#include "..\ui.h"
+#include "..\src\base.h"
+#include "..\src\ai.h"
+#include "..\src\ui.h"
 
 #include "..\external/quartz.h"
 
