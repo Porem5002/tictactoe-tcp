@@ -42,6 +42,40 @@ void ui_draw_board(ui_info_t info, const board_t* b)
     }
 }
 
+quartz_aabb2 ui_get_button_aabb(const ui_button_t* btn)
+{
+    quartz_aabb2 box = { .x = btn->position.x, .y = btn->position.y, .hwidth = btn->scale.x/2, .hheight = btn->scale.y/2 };
+    return box;
+}
+
+bool ui_check_button_hover(ui_button_t* btn, quartz_vec2 point)
+{
+    if(btn->disabled) return btn->hovered = false;
+
+    quartz_aabb2 box = ui_get_button_aabb(btn);
+    return btn->hovered = quartz_aabb2_touches_point(point, box);
+}
+
+void ui_draw_button(const ui_button_t* btn, quartz_font font, float font_size, const char* text, quartz_color base_color, quartz_color hover_color, quartz_color disabled_color)
+{
+    quartz_color color;
+
+    if(btn->disabled)
+        color = disabled_color;
+    else if(btn->hovered)
+        color = hover_color;
+    else
+        color = base_color;
+    
+    quartz_render2D_quad(color, btn->position, btn->scale, 0.0f);
+    quartz_vec2 text_size = quartz_font_get_text_size(font, font_size, text);
+    
+    quartz_vec2 text_pos = btn->position;
+    text_pos.x -= text_size.x/2;
+    text_pos.y += text_size.y/2;
+    quartz_render2D_text(font, font_size, text, text_pos, QUARTZ_BLACK);
+}
+
 static void draw_X(quartz_color color, quartz_vec2 pos, float size)
 {
     quartz_render2D_quad(color, pos, (quartz_vec2){ size/4, size }, 3.1415/4.0f);

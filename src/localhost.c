@@ -7,6 +7,8 @@
 
 #include "../external/quartz.h"
 
+extern const scene_t menu_scene;
+
 static void* scene_make(const quartz_font* font, const quartz_camera2D* camera);
 static void scene_update(scene_selector_t* selector, void* ctx_);
 static void scene_free(void* ctx_);
@@ -19,7 +21,11 @@ const scene_t localhost_scene = {
 
 typedef struct
 {
+    const quartz_font* font;
     const quartz_camera2D* camera;
+
+    ui_button_t back_btn;
+    ui_button_t reset_btn;
 
     game_t game;
     bool is_ai [3];
@@ -29,7 +35,19 @@ static context_t ctx = {0};
 
 static void* scene_make(const quartz_font* font, const quartz_camera2D* camera)
 {
+    ctx.font = font;
     ctx.camera = camera;
+    
+    ui_button_t back_btn = {0};
+    back_btn.position = (quartz_vec2){ -400 + 60, 300 - 60 };
+    back_btn.scale = (quartz_vec2){ 60, 60 };
+
+    ui_button_t reset_btn = {0};
+    reset_btn.position = (quartz_vec2){ 0, -200 };
+    reset_btn.scale = (quartz_vec2){ 200, 60 };
+
+    ctx.back_btn = back_btn;
+    ctx.reset_btn = reset_btn;
     ctx.game = game_make(3, PLAYER_1);
     ctx.is_ai[PLAYER_1] = true;
     ctx.is_ai[PLAYER_2] = false;
@@ -39,6 +57,7 @@ static void* scene_make(const quartz_font* font, const quartz_camera2D* camera)
 static void scene_update(scene_selector_t* selector, void* ctx_)
 {
     context_t* ctx = ctx_;
+    float font_size = 35;
 
     ui_info_t ui_info = {
         .background_color = QUARTZ_BLACK,
@@ -52,8 +71,17 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     quartz_ivec2 mouse_screen_pos = quartz_get_mouse_pos();
     quartz_vec2 mouse_pos = quartz_camera2D_to_world_through_viewport(ctx->camera, mouse_screen_pos, quartz_get_screen_viewport());
 
-    if(!ctx->game.running && quartz_is_key_down(QUARTZ_KEY_SPACE))
-        game_restart(&ctx->game);
+    if(ui_check_button_hover(&ctx->back_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
+        scene_selector_change(selector, menu_scene);
+
+    ctx->reset_btn.disabled = ctx->game.running;
+    ui_check_button_hover(&ctx->reset_btn, mouse_pos);
+
+    if(!ctx->game.running)
+    {
+        if(ctx->reset_btn.hovered && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
+            game_restart(&ctx->game);
+    }
     else
     {
         int x, y;
@@ -71,7 +99,11 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     }
 
     quartz_clear(ui_info.background_color);
+
     ui_draw_board(ui_info, &ctx->game.board);
+    ui_draw_button(&ctx->back_btn, *ctx->font, font_size, "<", QUARTZ_WHITE, QUARTZ_GREEN, (quartz_color){0.5, 0.5, 0.5, 1.0});
+    ui_draw_button(&ctx->reset_btn, *ctx->font, font_size, "Reset", QUARTZ_WHITE, QUARTZ_GREEN, (quartz_color){0.5, 0.5, 0.5, 1.0});
+    
     quartz_render2D_flush();
 }
 
