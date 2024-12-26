@@ -7,6 +7,7 @@
 #include "ui.h"
 
 extern const scene_t localhost_scene;
+extern const scene_t online_scene;
 
 static void* scene_make(const quartz_font* font, const quartz_camera2D* camera);
 static void scene_update(scene_selector_t* selector, void* ctx_);
@@ -60,7 +61,7 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
         scene_selector_change(selector, localhost_scene);
 
     if(ui_check_button_hover(&ctx->online_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
-        printf("I want to play online\n");
+        scene_selector_change(selector, online_scene);
 
     quartz_clear(QUARTZ_BLACK);
 

@@ -60,6 +60,9 @@ typedef struct
     char data [COMPACT_PACKET_SIZE];
 } connection_t;
 
+void net_start();
+void net_finish();
+
 connection_t connection_init(SOCKET sock, bool nonblock);
 connect_status_t connection_start_connect(connection_t* conn, struct sockaddr_in addr);
 connect_status_t connection_continue_connect(connection_t* conn);

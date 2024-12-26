@@ -1,12 +1,15 @@
 #include <stdlib.h>
 
 #include "scene.h"
+#include "../net/net.h"
+
 #include "../external/quartz.h"
 
 extern const scene_t menu_scene;
 
 int main(void)
 {
+    net_start();
     quartz_start(800, 600, "TicTacToe");
     
     quartz_font font = quartz_load_font("assets/fonts/Lato-Black.ttf");
@@ -25,5 +28,6 @@ int main(void)
 
     scene_selector_free(&selector);
     quartz_finish();
+    net_finish();
     return 0;
 }

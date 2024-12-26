@@ -1,5 +1,16 @@
 #include "net.h"
 
+void net_start()
+{
+    WSADATA wsadata;
+    WSAStartup(MAKEWORD(2, 2), &wsadata);
+}
+
+void net_finish()
+{
+    WSACleanup();
+}
+
 connection_t connection_init(SOCKET sock, bool nonblock)
 {
     connection_t conn = {
