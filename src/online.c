@@ -12,6 +12,8 @@
 
 #include "..\net\net.h"
 
+extern const scene_t menu_scene;
+
 static void* scene_make(const quartz_font* font, const quartz_camera2D* camera);
 static void scene_update(scene_selector_t* selector, void* ctx_);
 static void scene_free(void* ctx_); 
@@ -37,6 +39,8 @@ typedef struct
     const quartz_font* font;
     const quartz_camera2D* camera;
 
+    ui_button_t back_btn;
+
     mode_t mode;
     float conn_timeout;
     connection_t conn;
@@ -48,6 +52,10 @@ static context_t ctx;
 
 static void* scene_make(const quartz_font* font, const quartz_camera2D* camera)
 {
+    ui_button_t back_btn = {0};
+    back_btn.position = (quartz_vec2){ -400 + 60, 300 - 60 };
+    back_btn.scale = (quartz_vec2){ 60, 60 };
+
     SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
     assert(sock != INVALID_SOCKET);
 
@@ -61,6 +69,8 @@ static void* scene_make(const quartz_font* font, const quartz_camera2D* camera)
 
     ctx.font = font;
     ctx.camera = camera;
+
+    ctx.back_btn = back_btn;
 
     ctx.mode = MODE_CONNECTING;
     ctx.conn_timeout = 2;
@@ -86,6 +96,9 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
 
     quartz_ivec2 mouse_screen_pos = quartz_get_mouse_pos();
     quartz_vec2 mouse_pos = quartz_camera2D_to_world_through_viewport(ctx->camera, mouse_screen_pos, quartz_get_screen_viewport());
+
+    if(ui_check_button_hover(&ctx->back_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
+        scene_selector_change(selector, menu_scene);
 
     switch(ctx->mode)
     {
@@ -114,7 +127,6 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
             {
                 assert(p.kind == PACKET_KIND_RESPONSE_CONNECT);
                 ctx->player = p.response_connect.assigned_player;
-                printf("Connected as player %d\n", ctx->player);
                 ctx->mode = MODE_PLAYING;
             }
             else if(status == PACKET_STATUS_NO_MORE)
@@ -197,7 +209,8 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
         quartz_vec2 pos = { -text_size.x/2, text_size.y/2 };
         quartz_render2D_text(*ctx->font, font_size, text, pos, color);
     }
-    
+
+    ui_draw_button(&ctx->back_btn, *ctx->font, 35, "<", QUARTZ_WHITE, QUARTZ_GREEN, (quartz_color){ 0.5, 0.5, 0.5, 1.0 });
     quartz_render2D_flush();
 }
 
