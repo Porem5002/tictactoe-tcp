@@ -60,18 +60,11 @@ static void* scene_make(scene_persistent_data_t pdata)
     SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
     assert(sock != INVALID_SOCKET);
 
-    const char* name = "kd4042.ddns.net";
-    int port = 7777;
-
-    struct hostent* host = gethostbyname(name);
-
     struct sockaddr_in serv_addr = {0};
     serv_addr.sin_family = AF_INET;
-    //serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    //serv_addr.sin_port = htons(7777);
-    serv_addr.sin_addr.s_addr = *(u_long*)host->h_addr_list[0];
-    serv_addr.sin_port = htons(port);
-
+    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    serv_addr.sin_port = htons(7777);
+    
     connection_t conn = connection_init(sock, true);
     connection_start_connect(&conn, serv_addr);
 
