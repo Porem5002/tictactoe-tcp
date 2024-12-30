@@ -9,7 +9,7 @@
 
 extern const scene_t menu_scene;
 
-static void* scene_make(const quartz_font* font, const quartz_camera2D* camera);
+static void* scene_make(scene_persistent_data_t pdata);
 static void scene_update(scene_selector_t* selector, void* ctx_);
 static void scene_free(void* ctx_);
 
@@ -21,7 +21,8 @@ const scene_t localhost_scene = {
 
 typedef struct
 {
-    const quartz_font* font;
+    quartz_viewport viewport;
+    quartz_font font;
     const quartz_camera2D* camera;
 
     ui_button_t back_btn;
@@ -33,10 +34,11 @@ typedef struct
 
 static context_t ctx = {0};
 
-static void* scene_make(const quartz_font* font, const quartz_camera2D* camera)
+static void* scene_make(scene_persistent_data_t pdata)
 {
-    ctx.font = font;
-    ctx.camera = camera;
+    ctx.viewport = pdata.viewport;
+    ctx.font = pdata.font;
+    ctx.camera = pdata.camera;
     
     ui_button_t back_btn = {0};
     back_btn.position = (quartz_vec2){ -400 + 60, 300 - 60 };
@@ -69,7 +71,7 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     };
 
     quartz_ivec2 mouse_screen_pos = quartz_get_mouse_pos();
-    quartz_vec2 mouse_pos = quartz_camera2D_to_world_through_viewport(ctx->camera, mouse_screen_pos, quartz_get_screen_viewport());
+    quartz_vec2 mouse_pos = quartz_camera2D_to_world_through_viewport(ctx->camera, mouse_screen_pos, ctx->viewport);
 
     if(ui_check_button_hover(&ctx->back_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
         scene_selector_change(selector, menu_scene);
@@ -101,8 +103,8 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     quartz_clear(ui_info.background_color);
 
     ui_draw_board(ui_info, &ctx->game.board);
-    ui_draw_button(&ctx->back_btn, *ctx->font, font_size, "<", QUARTZ_WHITE, QUARTZ_GREEN, (quartz_color){0.5, 0.5, 0.5, 1.0});
-    ui_draw_button(&ctx->reset_btn, *ctx->font, font_size, "Reset", QUARTZ_WHITE, QUARTZ_GREEN, (quartz_color){0.5, 0.5, 0.5, 1.0});
+    ui_draw_button(&ctx->back_btn, ctx->font, font_size, "<", QUARTZ_WHITE, QUARTZ_GREEN, (quartz_color){0.5, 0.5, 0.5, 1.0});
+    ui_draw_button(&ctx->reset_btn, ctx->font, font_size, "Reset", QUARTZ_WHITE, QUARTZ_GREEN, (quartz_color){0.5, 0.5, 0.5, 1.0});
     
     quartz_render2D_flush();
 }

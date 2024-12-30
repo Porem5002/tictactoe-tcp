@@ -28,8 +28,9 @@ connect_status_t connection_start_connect(connection_t* conn, struct sockaddr_in
 {
     if(connect(conn->sock, (struct sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
     {
-        if(WSAGetLastError() != WSAEWOULDBLOCK) return CONNECT_STATUS_FAILED;
-        
+        if(WSAGetLastError() != WSAEWOULDBLOCK && WSAGetLastError() != WSAEINPROGRESS)
+            return CONNECT_STATUS_FAILED;
+
         return CONNECT_STATUS_WAITING; 
     }
 

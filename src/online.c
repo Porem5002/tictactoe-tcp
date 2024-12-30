@@ -14,7 +14,7 @@
 
 extern const scene_t menu_scene;
 
-static void* scene_make(const quartz_font* font, const quartz_camera2D* camera);
+static void* scene_make(scene_persistent_data_t pdata);
 static void scene_update(scene_selector_t* selector, void* ctx_);
 static void scene_free(void* ctx_); 
 
@@ -36,7 +36,8 @@ typedef enum
 
 typedef struct
 {
-    const quartz_font* font;
+    quartz_viewport viewport;
+    quartz_font font;
     const quartz_camera2D* camera;
 
     ui_button_t back_btn;
@@ -50,7 +51,7 @@ typedef struct
 
 static context_t ctx;
 
-static void* scene_make(const quartz_font* font, const quartz_camera2D* camera)
+static void* scene_make(scene_persistent_data_t pdata)
 {
     ui_button_t back_btn = {0};
     back_btn.position = (quartz_vec2){ -400 + 60, 300 - 60 };
@@ -59,16 +60,24 @@ static void* scene_make(const quartz_font* font, const quartz_camera2D* camera)
     SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
     assert(sock != INVALID_SOCKET);
 
+    const char* name = "kd4042.ddns.net";
+    int port = 7777;
+
+    struct hostent* host = gethostbyname(name);
+
     struct sockaddr_in serv_addr = {0};
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    serv_addr.sin_port = htons(6000);
+    //serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    //serv_addr.sin_port = htons(7777);
+    serv_addr.sin_addr.s_addr = *(u_long*)host->h_addr_list[0];
+    serv_addr.sin_port = htons(port);
 
     connection_t conn = connection_init(sock, true);
     connection_start_connect(&conn, serv_addr);
 
-    ctx.font = font;
-    ctx.camera = camera;
+    ctx.viewport = pdata.viewport;
+    ctx.font = pdata.font;
+    ctx.camera = pdata.camera;
 
     ctx.back_btn = back_btn;
 
@@ -95,7 +104,7 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     };
 
     quartz_ivec2 mouse_screen_pos = quartz_get_mouse_pos();
-    quartz_vec2 mouse_pos = quartz_camera2D_to_world_through_viewport(ctx->camera, mouse_screen_pos, quartz_get_screen_viewport());
+    quartz_vec2 mouse_pos = quartz_camera2D_to_world_through_viewport(ctx->camera, mouse_screen_pos, ctx->viewport);
 
     if(ui_check_button_hover(&ctx->back_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
         scene_selector_change(selector, menu_scene);
@@ -205,12 +214,12 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
             color = QUARTZ_RED;
         }
 
-        quartz_vec2 text_size = quartz_font_get_text_size(*ctx->font, font_size, text);
+        quartz_vec2 text_size = quartz_font_get_text_size(ctx->font, font_size, text);
         quartz_vec2 pos = { -text_size.x/2, text_size.y/2 };
-        quartz_render2D_text(*ctx->font, font_size, text, pos, color);
+        quartz_render2D_text(ctx->font, font_size, text, pos, color);
     }
 
-    ui_draw_button(&ctx->back_btn, *ctx->font, 35, "<", QUARTZ_WHITE, QUARTZ_GREEN, (quartz_color){ 0.5, 0.5, 0.5, 1.0 });
+    ui_draw_button(&ctx->back_btn, ctx->font, 35, "<", QUARTZ_WHITE, QUARTZ_GREEN, (quartz_color){ 0.5, 0.5, 0.5, 1.0 });
     quartz_render2D_flush();
 }
 
