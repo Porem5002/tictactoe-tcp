@@ -87,12 +87,14 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
 {
     context_t* ctx = ctx_;
 
-    const ui_info_t ui_info = {
-        .background_color = QUARTZ_BLACK,
-        .cell_color = { 0.95, 0.95, 0.95, 1.0 },
-        .p1_color = QUARTZ_RED,
-        .p2_color = QUARTZ_BLUE,
+    ui_info_t ui_info = {
+        .background_color = UI_BLACK_COLOR,
+        .wall_color = UI_WHITE_COLOR,
+        .cell_color = UI_BLACK_COLOR,
+        .p1_color = UI_RED_COLOR,
+        .p2_color = UI_BLUE_COLOR,
         .cell_diplay_size = 100,
+        .wall_diplay_size = 10,
         .symbol_display_size = 50
     };
 
@@ -182,37 +184,37 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
         ui_draw_board(ui_info, &ctx->board);
     else
     {
-        float font_size = 30;
         const char* text;
         quartz_color color;
     
         if(ctx->mode == MODE_CONNECTING)
         {
             text = "Connecting to the server...";
-            color = QUARTZ_WHITE;
+            color = UI_WHITE_COLOR;
         }
         else if(ctx->mode == MODE_ASSIGNING)
         {
             text = "Waiting for another player...";
-            color = QUARTZ_WHITE;
+            color = UI_WHITE_COLOR;
         }
         else if(ctx->mode == MODE_FAILED_CONNECT)
         {
             text = "Could not connect to the server!";
-            color = QUARTZ_RED;
+            color = UI_RED_COLOR;
         }
         else if(ctx->mode == MODE_LOST_CONTACT)
         {
             text = "Lost contact with the server!";
-            color = QUARTZ_RED;
+            color = UI_RED_COLOR;
         }
 
+        float font_size = 30;
         quartz_vec2 text_size = quartz_font_get_text_size(ctx->font, font_size, text);
         quartz_vec2 pos = { -text_size.x/2, text_size.y/2 };
         quartz_render2D_text(ctx->font, font_size, text, pos, color);
     }
 
-    ui_draw_button(&ctx->back_btn, ctx->font, 35, "<", QUARTZ_WHITE, QUARTZ_GREEN, (quartz_color){ 0.5, 0.5, 0.5, 1.0 });
+    ui_draw_button(&ctx->back_btn, ctx->font, 35, "<", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
     quartz_render2D_flush();
 }
 

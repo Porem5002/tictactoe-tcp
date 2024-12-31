@@ -65,10 +65,10 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     if(ui_check_button_hover(&ctx->online_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
         scene_selector_change(selector, online_scene);
 
-    quartz_clear(QUARTZ_BLACK);
+    quartz_clear(UI_BLACK_COLOR);
 
-    ui_draw_button(&ctx->localhost_btn, ctx->font, font_size, "Localhost", QUARTZ_WHITE, QUARTZ_GREEN, (quartz_color){0.5, 0.5, 0.5, 1.0});
-    ui_draw_button(&ctx->online_btn, ctx->font, font_size, "Online", QUARTZ_WHITE, QUARTZ_GREEN, (quartz_color){0.5, 0.5, 0.5, 1.0});
+    ui_draw_button(&ctx->localhost_btn, ctx->font, font_size, ">  Localhost  <", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
+    ui_draw_button(&ctx->online_btn, ctx->font, font_size, ">  Online  <", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
 
     quartz_render2D_flush();
 }

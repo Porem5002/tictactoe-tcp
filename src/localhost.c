@@ -46,7 +46,7 @@ static void* scene_make(scene_persistent_data_t pdata)
 
     ui_button_t reset_btn = {0};
     reset_btn.position = (quartz_vec2){ 0, -200 };
-    reset_btn.scale = (quartz_vec2){ 200, 60 };
+    reset_btn.scale = (quartz_vec2){ 100, 40 };
 
     ctx.back_btn = back_btn;
     ctx.reset_btn = reset_btn;
@@ -59,14 +59,15 @@ static void* scene_make(scene_persistent_data_t pdata)
 static void scene_update(scene_selector_t* selector, void* ctx_)
 {
     context_t* ctx = ctx_;
-    float font_size = 35;
 
     ui_info_t ui_info = {
-        .background_color = QUARTZ_BLACK,
-        .cell_color = { 0.95, 0.95, 0.95, 1.0 },
-        .p1_color = QUARTZ_RED,
-        .p2_color = QUARTZ_BLUE,
+        .background_color = UI_BLACK_COLOR,
+        .wall_color = UI_WHITE_COLOR,
+        .cell_color = UI_BLACK_COLOR,
+        .p1_color = UI_RED_COLOR,
+        .p2_color = UI_BLUE_COLOR,
         .cell_diplay_size = 100,
+        .wall_diplay_size = 10,
         .symbol_display_size = 50
     };
 
@@ -103,8 +104,8 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     quartz_clear(ui_info.background_color);
 
     ui_draw_board(ui_info, &ctx->game.board);
-    ui_draw_button(&ctx->back_btn, ctx->font, font_size, "<", QUARTZ_WHITE, QUARTZ_GREEN, (quartz_color){0.5, 0.5, 0.5, 1.0});
-    ui_draw_button(&ctx->reset_btn, ctx->font, font_size, "Reset", QUARTZ_WHITE, QUARTZ_GREEN, (quartz_color){0.5, 0.5, 0.5, 1.0});
+    ui_draw_button(&ctx->back_btn, ctx->font, 35, "<", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
+    ui_draw_button(&ctx->reset_btn, ctx->font, 25, "Reset", UI_WHITE_COLOR, QUARTZ_TRANSPARENT, (quartz_color){ 0.5f, 0.5f, 0.5f, 0.33f });
     
     quartz_render2D_flush();
 }
