@@ -103,9 +103,33 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
 
     quartz_clear(ui_info.background_color);
 
+    if(!ctx->game.running)
+    {
+        player_t winner;
+        board_is_final(&ctx->game.board, &winner);
+
+        const char* text = ""; 
+
+        switch(winner)
+        {
+            case NO_PLAYER:
+                text = "Draw";
+                break;
+            case PLAYER_1:
+                text = "X Won";
+                break;
+            case PLAYER_2:
+                text = "O Won";
+                break;
+        }
+
+        quartz_vec2 pos = { 0, 200 };
+        ui_draw_text_centered(ctx->font, 30, text, pos, UI_WHITE_COLOR);
+    }
+
     ui_draw_board(ui_info, &ctx->game.board);
     ui_draw_button(&ctx->back_btn, ctx->font, 35, "<", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
-    ui_draw_button(&ctx->reset_btn, ctx->font, 25, "Reset", UI_WHITE_COLOR, QUARTZ_TRANSPARENT, (quartz_color){ 0.5f, 0.5f, 0.5f, 0.33f });
+    ui_draw_button(&ctx->reset_btn, ctx->font, 25, "Reset", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
     
     quartz_render2D_flush();
 }

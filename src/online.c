@@ -208,10 +208,8 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
             color = UI_RED_COLOR;
         }
 
-        float font_size = 30;
-        quartz_vec2 text_size = quartz_font_get_text_size(ctx->font, font_size, text);
-        quartz_vec2 pos = { -text_size.x/2, text_size.y/2 };
-        quartz_render2D_text(ctx->font, font_size, text, pos, color);
+        quartz_vec2 pos = {0};
+        ui_draw_text_centered(ctx->font, 30, text, pos, color);
     }
 
     ui_draw_button(&ctx->back_btn, ctx->font, 35, "<", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));

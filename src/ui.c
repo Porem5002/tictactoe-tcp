@@ -2,9 +2,6 @@
 
 #include "ui.h"
 
-static void draw_X(quartz_color color, quartz_vec2 pos, float size);
-static void draw_O(quartz_color outer_color, quartz_color inner_color, quartz_vec2 pos, float size);
-
 quartz_color ui_ligthen_color(quartz_color color, float factor)
 {
     return ui_norm_rgb(color.r + factor * (1.0f - color.r), color.g + factor * (1.0f - color.g), color.b + factor * (1.0f - color.b));
@@ -66,9 +63,9 @@ void ui_draw_board(ui_info_t info, const board_t* b)
             quartz_render2D_quad(info.cell_color, pos, (quartz_vec2){info.cell_diplay_size, info.cell_diplay_size}, 0.0f);
 
             if(board_get_cell(b, x, y) == PLAYER_1)
-                draw_X(info.p1_color, pos, info.symbol_display_size);
+                ui_draw_X(info.p1_color, pos, info.symbol_display_size);
             else if(board_get_cell(b, x, y) == PLAYER_2)
-                draw_O(info.p2_color, info.cell_color, pos, info.symbol_display_size);
+                ui_draw_O(info.p2_color, info.cell_color, pos, info.symbol_display_size);
         }
     }
 
@@ -91,6 +88,26 @@ void ui_draw_board(ui_info_t info, const board_t* b)
     }
 }
 
+void ui_draw_X(quartz_color color, quartz_vec2 pos, float size)
+{
+    quartz_render2D_quad(color, pos, (quartz_vec2){ size/4, size }, 3.1415/4.0f);
+    quartz_render2D_quad(color, pos, (quartz_vec2){ size/4, size }, -3.1415/4.0f);
+}
+
+void ui_draw_O(quartz_color outer_color, quartz_color inner_color, quartz_vec2 pos, float size)
+{
+    quartz_render2D_circle(outer_color, pos, size/2);
+    quartz_render2D_circle(inner_color, pos, size/3);
+}
+
+void ui_draw_text_centered(quartz_font font, float font_size, const char* text, quartz_vec2 pos, quartz_color color)
+{
+    quartz_vec2 text_size = quartz_font_get_text_size(font, font_size, text);
+    pos.x -= text_size.x/2;
+    pos.y += text_size.y/2;
+    quartz_render2D_text(font, font_size, text, pos, color);
+}
+
 quartz_aabb2 ui_get_button_aabb(const ui_button_t* btn)
 {
     quartz_aabb2 box = { .x = btn->position.x, .y = btn->position.y, .hwidth = btn->scale.x/2, .hheight = btn->scale.y/2 };
@@ -110,24 +127,6 @@ void ui_draw_button(const ui_button_t* btn, quartz_font font, float font_size, c
     if(btn->disabled) return;
 
     quartz_color color = btn->hovered ? hover_color : base_color;
-    
     quartz_render2D_quad(color, btn->position, btn->scale, 0.0f);
-    quartz_vec2 text_size = quartz_font_get_text_size(font, font_size, text);
-    
-    quartz_vec2 text_pos = btn->position;
-    text_pos.x -= text_size.x/2;
-    text_pos.y += text_size.y/2;
-    quartz_render2D_text(font, font_size, text, text_pos, text_color);
-}
-
-static void draw_X(quartz_color color, quartz_vec2 pos, float size)
-{
-    quartz_render2D_quad(color, pos, (quartz_vec2){ size/4, size }, 3.1415/4.0f);
-    quartz_render2D_quad(color, pos, (quartz_vec2){ size/4, size }, -3.1415/4.0f);
-}
-
-static void draw_O(quartz_color outer_color, quartz_color inner_color, quartz_vec2 pos, float size)
-{
-    quartz_render2D_circle(outer_color, pos, size/2);
-    quartz_render2D_circle(inner_color, pos, size/3);
+    ui_draw_text_centered(font, font_size, text, btn->position, text_color);
 }
