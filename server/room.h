@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "net.h"
+#include "..\shared\net.h"
 
 typedef enum
 {

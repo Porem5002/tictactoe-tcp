@@ -3,14 +3,12 @@
 #include <assert.h>
 #include <winsock2.h>
 
-#include "base.h"
 #include "ai.h"
 #include "ui.h"
 #include "scene.h"
 
-#include "..\external/quartz.h"
-
-#include "..\net\net.h"
+#include "../shared/net.h"
+#include "../external/quartz.h"
 
 extern const scene_t menu_scene;
 

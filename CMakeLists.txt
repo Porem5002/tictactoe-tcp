@@ -5,8 +5,12 @@ project(tictactoe)
 set(WINSOCK_LIB ws2_32.lib)
 set(QUARTZ_LIB "${CMAKE_SOURCE_DIR}/external/quartz.lib")
 
-add_executable(tictactoe src/main.c src/scene.c src/menu.c src/localhost.c src/online.c src/base.c src/ui.c src/ai.c net/net.c)
-add_executable(tictactoe-server net/room.c net/main.c net/server.c src/base.c net/net.c)
+file(GLOB SHARED_SRCS "shared/*.c" "shared/*.h")
+file(GLOB CLIENT_SRCS "client/*.c" "client/*.c")
+file(GLOB SERVER_SRCS "server/*.c" "server/*.c")
+
+add_executable(tictactoe ${CLIENT_SRCS} ${SHARED_SRCS})
+add_executable(tictactoe-server ${SERVER_SRCS} ${SHARED_SRCS})
 
 target_link_libraries(tictactoe PRIVATE ${WINSOCK_LIB} ${QUARTZ_LIB})
 target_link_libraries(tictactoe-server PRIVATE ${WINSOCK_LIB})

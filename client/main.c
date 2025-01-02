@@ -1,8 +1,8 @@
 #include <stdlib.h>
 
 #include "scene.h"
-#include "../net/net.h"
 
+#include "../shared/net.h"
 #include "../external/quartz.h"
 
 extern const scene_t menu_scene;

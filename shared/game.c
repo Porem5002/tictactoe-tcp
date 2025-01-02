@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "base.h"
+#include "game.h"
 
 static bool board_check_line(const board_t* b, int y, player_t* winner)
 {

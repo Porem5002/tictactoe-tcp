@@ -1,6 +1,5 @@
 #include <stdlib.h>
 
-#include "base.h"
 #include "ai.h"
 #include "ui.h"
 #include "scene.h"

@@ -3,8 +3,7 @@
 
 #include <stdbool.h>
 
-#include "base.h"
-
+#include "../shared/game.h"
 #include "../external/quartz.h"
 
 #define ui_rgb(R, G, B) ((quartz_color){ (R)/255.0f, (G)/255.0f, (B)/255.0f, 1.0f })
