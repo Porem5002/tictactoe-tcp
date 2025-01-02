@@ -25,8 +25,11 @@ typedef enum
 {
     PACKET_KIND_RESPONSE_CONNECT,
     PACKET_KIND_RESPONSE_MOVE,
+    PACKET_KIND_RESPONSE_WINNER,
+    PACKET_KIND_RESPONDE_RESET,
 
     PACKET_KIND_REQUEST_MOVE,
+    PACKET_KIND_REQUEST_RESET,
 } packet_kind_t;
 
 typedef struct
@@ -45,6 +48,11 @@ typedef struct
             player_t player;
             int x, y;
         } response_move;
+
+        struct
+        {
+            player_t player;
+        } response_winner;
 
         struct
         {

@@ -29,6 +29,7 @@ typedef enum
     MODE_CONNECTING,
     MODE_ASSIGNING,
     MODE_PLAYING,
+    MODE_FINISHED,
 
     MODE_FAILED_CONNECT,
     MODE_LOST_CONTACT,
@@ -43,6 +44,7 @@ typedef struct
     ui_button_t back_btn;
 
     mode_t mode;
+    player_t winner;
     float conn_timeout;
     connection_t conn;
     player_t player;
@@ -75,6 +77,7 @@ static void* scene_make(scene_persistent_data_t pdata)
     ctx.back_btn = back_btn;
 
     ctx.mode = MODE_CONNECTING;
+    ctx.winner = NO_PLAYER;
     ctx.conn_timeout = 2;
     ctx.conn = conn;
     ctx.player = NO_PLAYER;
@@ -150,6 +153,12 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
             {   
                 if(p.kind == PACKET_KIND_RESPONSE_MOVE)
                     board_set_cell(&ctx->board, p.response_move.x, p.response_move.y, p.response_move.player);
+
+                if(p.kind == PACKET_KIND_RESPONSE_WINNER)
+                {
+                    ctx->mode = MODE_FINISHED;
+                    ctx->winner = p.response_winner.player;
+                }
             }
 
             if(status == PACKET_STATUS_NO_MORE)
@@ -175,6 +184,17 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
             }
         }
         break;
+        case MODE_FINISHED:
+        {
+            packet_t p;
+            packet_status_t status;
+
+            while((status = packet_poll(&ctx->conn, &p)) == PACKET_STATUS_RECEIVED);
+
+            if(status == PACKET_STATUS_NO_MORE)
+                ctx->mode = MODE_LOST_CONTACT;
+        }
+        break;
         default: break;
     }
 
@@ -182,6 +202,21 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     
     if(ctx->mode == MODE_PLAYING)
         ui_draw_board(ui_info, &ctx->board);
+    else if(ctx->mode == MODE_FINISHED)
+    {
+        const char* text = "";
+
+        switch(ctx->winner)
+        {
+            case NO_PLAYER: text = "Draw"; break;
+            case PLAYER_1: text = "X Won"; break;
+            case PLAYER_2: text = "O Won"; break;
+        }
+
+        quartz_vec2 pos = {0, 200};
+        ui_draw_text_centered(ctx->font, 30, text, pos, UI_WHITE_COLOR);
+        ui_draw_board(ui_info, &ctx->board);
+    }
     else
     {
         const char* text;

@@ -106,6 +106,10 @@ packet_status_t packet_poll(connection_t* connection, packet_t* out_packet)
                 p.response_move.x = data[2];
                 p.response_move.y = data[3];
                 break;
+            case PACKET_KIND_RESPONSE_WINNER:
+                p.kind = PACKET_KIND_RESPONSE_WINNER;
+                p.response_winner.player = data[1];
+                break;
             case PACKET_KIND_REQUEST_MOVE:
                 p.kind = PACKET_KIND_REQUEST_MOVE;
                 p.resquest_move.x = data[1];
@@ -137,6 +141,10 @@ bool packet_send(connection_t* connection, packet_t packet)
             data[1] = packet.response_move.player;
             data[2] = packet.response_move.x;
             data[3] = packet.response_move.y;
+            break;
+        case PACKET_KIND_RESPONSE_WINNER:
+            data[0] = PACKET_KIND_RESPONSE_WINNER;
+            data[1] = packet.response_winner.player;
             break;
         case PACKET_KIND_REQUEST_MOVE:
             data[0] = PACKET_KIND_REQUEST_MOVE;
