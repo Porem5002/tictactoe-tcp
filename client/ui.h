@@ -44,11 +44,11 @@ quartz_color ui_darken_color(quartz_color color, float factor);
 float ui_calc_board_side_size(ui_info_t info, const board_t* b);
 quartz_vec2 ui_calc_board_origin(quartz_vec2 pos, ui_info_t info, const board_t* b);
 bool ui_match_point_to_board_cell(ui_info_t info, const board_t* b, quartz_vec2 point, int* x, int* y);
-void ui_draw_board(ui_info_t info, const board_t* b);
 
+const char* ui_get_winner_text(player_t winner);
+void ui_draw_board(ui_info_t info, const board_t* b);
 void ui_draw_X(quartz_color color, quartz_vec2 pos, float size);
 void ui_draw_O(quartz_color outer_color, quartz_color inner_color, quartz_vec2 pos, float size);
-
 void ui_draw_text_centered(quartz_font font, float font_size, const char* text, quartz_vec2 pos, quartz_color color);
 
 quartz_aabb2 ui_get_button_aabb(const ui_button_t* btn);

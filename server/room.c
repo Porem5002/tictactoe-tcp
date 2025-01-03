@@ -100,6 +100,18 @@ bool room_update(room_t* room, fd_set* fds)
                 packet_t p;
                 packet_status_t status = packet_poll(&room->conns[i], &p);
 
+                if(p.kind == PACKET_KIND_REQUEST_RESET)
+                {
+                    packet_t p = {0};
+                    p.kind = PACKET_KIND_RESPONSE_RESET;
+                    packet_send(&room->conns[0], p);
+                    packet_send(&room->conns[1], p);
+                    
+                    room->mode = ROOM_MODE_PLAYING;
+                    game_restart(&room->game);
+                    break;
+                }
+
                 if(status == PACKET_STATUS_NO_MORE) return false;
             }
             break;

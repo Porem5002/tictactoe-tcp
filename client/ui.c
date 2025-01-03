@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <math.h>
 
 #include "ui.h"
@@ -43,6 +44,17 @@ bool ui_match_point_to_board_cell(ui_info_t info, const board_t* b, quartz_vec2 
     }
 
     return false;
+}
+
+const char* ui_get_winner_text(player_t winner)
+{
+    switch(winner)
+    {
+        case NO_PLAYER: return "Draw";
+        case PLAYER_1: return "X Won";
+        case PLAYER_2: return "O Won";
+        default: assert(false);
+    }
 }
 
 void ui_draw_board(ui_info_t info, const board_t* b)

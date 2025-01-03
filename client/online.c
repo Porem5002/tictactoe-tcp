@@ -40,13 +40,15 @@ typedef struct
     const quartz_camera2D* camera;
 
     ui_button_t back_btn;
+    ui_button_t reset_btn;
 
     mode_t mode;
-    player_t winner;
     float conn_timeout;
+
     connection_t conn;
     player_t player;
     board_t board;
+    player_t winner;
 } context_t;
 
 static context_t ctx;
@@ -56,6 +58,10 @@ static void* scene_make(scene_persistent_data_t pdata)
     ui_button_t back_btn = {0};
     back_btn.position = (quartz_vec2){ -400 + 60, 300 - 60 };
     back_btn.scale = (quartz_vec2){ 60, 60 };
+
+    ui_button_t reset_btn = {0};
+    reset_btn.position = (quartz_vec2){ 0, -200 };
+    reset_btn.scale = (quartz_vec2){ 100, 40 };
 
     SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
     assert(sock != INVALID_SOCKET);
@@ -73,13 +79,14 @@ static void* scene_make(scene_persistent_data_t pdata)
     ctx.camera = pdata.camera;
 
     ctx.back_btn = back_btn;
+    ctx.reset_btn = reset_btn;
 
     ctx.mode = MODE_CONNECTING;
-    ctx.winner = NO_PLAYER;
     ctx.conn_timeout = 2;
     ctx.conn = conn;
     ctx.player = NO_PLAYER;
     ctx.board = board_make(3);
+    ctx.winner = NO_PLAYER;
 
     return &ctx;
 }
@@ -187,7 +194,21 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
             packet_t p;
             packet_status_t status;
 
-            while((status = packet_poll(&ctx->conn, &p)) == PACKET_STATUS_RECEIVED);
+            while((status = packet_poll(&ctx->conn, &p)) == PACKET_STATUS_RECEIVED)
+            {
+                if(p.kind == PACKET_KIND_RESPONSE_RESET)
+                {
+                    ctx->mode = MODE_PLAYING;
+                    board_clear(&ctx->board);
+                }
+            }
+
+            if(ui_check_button_hover(&ctx->reset_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
+            {
+                packet_t p = {0};
+                p.kind = PACKET_KIND_REQUEST_RESET;
+                packet_send(&ctx->conn, p);
+            }
 
             if(status == PACKET_STATUS_NO_MORE)
                 ctx->mode = MODE_LOST_CONTACT;
@@ -202,18 +223,11 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
         ui_draw_board(ui_info, &ctx->board);
     else if(ctx->mode == MODE_FINISHED)
     {
-        const char* text = "";
-
-        switch(ctx->winner)
-        {
-            case NO_PLAYER: text = "Draw"; break;
-            case PLAYER_1: text = "X Won"; break;
-            case PLAYER_2: text = "O Won"; break;
-        }
-
-        quartz_vec2 pos = {0, 200};
-        ui_draw_text_centered(ctx->font, 30, text, pos, UI_WHITE_COLOR);
+        const char* winner_text = ui_get_winner_text(ctx->winner);
+        quartz_vec2 winner_text_pos = {0, 200};
+        ui_draw_text_centered(ctx->font, 30, winner_text, winner_text_pos, UI_WHITE_COLOR);
         ui_draw_board(ui_info, &ctx->board);
+        ui_draw_button(&ctx->reset_btn, ctx->font, 25, "Reset", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
     }
     else
     {

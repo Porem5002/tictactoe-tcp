@@ -107,23 +107,9 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
         player_t winner;
         board_is_final(&ctx->game.board, &winner);
 
-        const char* text = ""; 
-
-        switch(winner)
-        {
-            case NO_PLAYER:
-                text = "Draw";
-                break;
-            case PLAYER_1:
-                text = "X Won";
-                break;
-            case PLAYER_2:
-                text = "O Won";
-                break;
-        }
-
-        quartz_vec2 pos = { 0, 200 };
-        ui_draw_text_centered(ctx->font, 30, text, pos, UI_WHITE_COLOR);
+        const char* winner_text = ui_get_winner_text(winner);
+        quartz_vec2 winner_text_pos = { 0, 200 };
+        ui_draw_text_centered(ctx->font, 30, winner_text, winner_text_pos, UI_WHITE_COLOR);
     }
 
     ui_draw_board(ui_info, &ctx->game.board);

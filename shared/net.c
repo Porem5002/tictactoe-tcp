@@ -92,28 +92,30 @@ packet_status_t packet_poll(connection_t* connection, packet_t* out_packet)
         connection->bytes_read = 0;
 
         char* data = connection->data;
+        
         packet_t p = {0};
+        p.kind = data[0]; 
 
         switch(data[0])
         {
             case PACKET_KIND_RESPONSE_CONNECT:
-                p.kind = PACKET_KIND_RESPONSE_CONNECT;
                 p.response_connect.assigned_player = data[1];
                 break;
             case PACKET_KIND_RESPONSE_MOVE:
-                p.kind = PACKET_KIND_RESPONSE_MOVE;
                 p.response_move.player = data[1];
                 p.response_move.x = data[2];
                 p.response_move.y = data[3];
                 break;
             case PACKET_KIND_RESPONSE_WINNER:
-                p.kind = PACKET_KIND_RESPONSE_WINNER;
                 p.response_winner.player = data[1];
                 break;
+            case PACKET_KIND_RESPONSE_RESET:
+                break;
             case PACKET_KIND_REQUEST_MOVE:
-                p.kind = PACKET_KIND_REQUEST_MOVE;
                 p.resquest_move.x = data[1];
                 p.resquest_move.y = data[2];
+                break;
+            case PACKET_KIND_REQUEST_RESET:
                 break;
             default:
                 return PACKET_STATUS_WAITING;
@@ -129,27 +131,28 @@ packet_status_t packet_poll(connection_t* connection, packet_t* out_packet)
 bool packet_send(connection_t* connection, packet_t packet)
 {
     char data [COMPACT_PACKET_SIZE] = {0};
+    data[0] = packet.kind;
 
     switch(packet.kind)
     {
         case PACKET_KIND_RESPONSE_CONNECT:
-            data[0] = PACKET_KIND_RESPONSE_CONNECT;
             data[1] = packet.response_connect.assigned_player;
             break;
         case PACKET_KIND_RESPONSE_MOVE:
-            data[0] = PACKET_KIND_RESPONSE_MOVE;
             data[1] = packet.response_move.player;
             data[2] = packet.response_move.x;
             data[3] = packet.response_move.y;
             break;
         case PACKET_KIND_RESPONSE_WINNER:
-            data[0] = PACKET_KIND_RESPONSE_WINNER;
             data[1] = packet.response_winner.player;
             break;
+        case PACKET_KIND_RESPONSE_RESET:
+            break;
         case PACKET_KIND_REQUEST_MOVE:
-            data[0] = PACKET_KIND_REQUEST_MOVE;
             data[1] = packet.resquest_move.x;
             data[2] = packet.resquest_move.y;
+            break;
+        case PACKET_KIND_REQUEST_RESET:
             break;
         default:
             return false;
