@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <winsock2.h>
+#include <ws2tcpip.h>
 
 #include "ai.h"
 #include "ui.h"
@@ -220,7 +221,23 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     quartz_clear(ui_info.background_color);
     
     if(ctx->mode == MODE_PLAYING)
+    {
         ui_draw_board(ui_info, &ctx->board);
+
+        // Draw cell highlight
+        int x, y;
+
+        if(ui_match_point_to_board_cell(ui_info, &ctx->board, mouse_pos, &x, &y)
+           && board_get_cell(&ctx->board, x, y) == NO_PLAYER)
+        {
+            quartz_vec2 point;
+            ui_match_board_cell_to_point(ui_info, &ctx->board, x, y, &point);
+            
+            quartz_color highlight_color = UI_WHITE_COLOR;
+            highlight_color.a = 0.20;
+            quartz_render2D_quad(highlight_color, point, (quartz_vec2){ui_info.cell_diplay_size, ui_info.cell_diplay_size}, 0.0f);
+        }
+    }
     else if(ctx->mode == MODE_FINISHED)
     {
         const char* winner_text = ui_get_winner_text(ctx->winner);

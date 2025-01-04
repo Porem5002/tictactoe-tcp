@@ -46,6 +46,20 @@ bool ui_match_point_to_board_cell(ui_info_t info, const board_t* b, quartz_vec2 
     return false;
 }
 
+bool ui_match_board_cell_to_point(ui_info_t info, const board_t* b, int x, int y, quartz_vec2* point)
+{
+    if(x < 0 || x >= b->size || y < 0 || y >= b->size) return false;
+
+    if(point != NULL)
+    {
+        quartz_vec2 origin = ui_calc_board_origin((quartz_vec2){0}, info, b);
+        point->x = origin.x + info.cell_diplay_size/2.0f + x * (info.cell_diplay_size + info.wall_diplay_size);
+        point->y = origin.y - info.cell_diplay_size/2.0f - y * (info.cell_diplay_size + info.wall_diplay_size);
+    }
+
+    return true;
+}
+
 const char* ui_get_winner_text(player_t winner)
 {
     switch(winner)

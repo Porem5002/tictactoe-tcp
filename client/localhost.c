@@ -113,6 +113,21 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     }
 
     ui_draw_board(ui_info, &ctx->game.board);
+
+    // Draw cell highlight
+    int x, y;
+
+    if(ctx->game.running && ui_match_point_to_board_cell(ui_info, &ctx->game.board, mouse_pos, &x, &y)
+       && board_get_cell(&ctx->game.board, x, y) == NO_PLAYER)
+    {
+        quartz_vec2 point;
+        ui_match_board_cell_to_point(ui_info, &ctx->game.board, x, y, &point);
+        
+        quartz_color highlight_color = UI_WHITE_COLOR;
+        highlight_color.a = 0.20;
+        quartz_render2D_quad(highlight_color, point, (quartz_vec2){ui_info.cell_diplay_size, ui_info.cell_diplay_size}, 0.0f);
+    }
+    
     ui_draw_button(&ctx->back_btn, ctx->font, 35, "<", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
     ui_draw_button(&ctx->reset_btn, ctx->font, 25, "Reset", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
     
