@@ -3,7 +3,6 @@
 #include "scene.h"
 
 #include "../shared/net.h"
-#include "../external/quartz.h"
 
 extern const scene_t menu_scene;
 

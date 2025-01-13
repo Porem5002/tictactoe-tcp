@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "../external/quartz.h"
+#include <quartz/quartz.h>
 
 typedef struct scene_selector_t scene_selector_t;
 

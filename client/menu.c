@@ -5,8 +5,6 @@
 #include "scene.h"
 #include "ui.h"
 
-#include "../external/quartz.h"
-
 extern const scene_t localhost_scene;
 extern const scene_t online_scene;
 

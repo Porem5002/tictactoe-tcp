@@ -4,7 +4,7 @@
 #include "ui.h"
 #include "scene.h"
 
-#include "../external/quartz.h"
+#include <quartz/quartz.h>
 
 extern const scene_t menu_scene;
 
