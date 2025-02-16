@@ -1,3 +1,6 @@
+#include <ws2tcpip.h>
+#include <assert.h>
+
 #include "net.h"
 
 void net_start()
@@ -9,6 +12,28 @@ void net_start()
 void net_finish()
 {
     WSACleanup();
+}
+
+bool net_get_ip_fom_name(const char* name, IN_ADDR* out_ip)
+{
+    assert(out_ip != NULL);
+
+    ADDRINFO hints = {0};
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    ADDRINFO* addrs;
+
+    if(getaddrinfo(name, NULL, &hints, &addrs) != 0)
+    {
+        *out_ip = (IN_ADDR){0};
+        return false;
+    }
+
+    *out_ip = ((struct sockaddr_in*)addrs->ai_addr)->sin_addr;
+    freeaddrinfo(addrs);
+    return true;
 }
 
 connection_t connection_init(SOCKET sock, bool nonblock)

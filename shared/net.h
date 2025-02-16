@@ -70,6 +70,7 @@ typedef struct
 
 void net_start();
 void net_finish();
+bool net_get_ip_fom_name(const char* name, IN_ADDR* out_ip);
 
 connection_t connection_init(SOCKET sock, bool nonblock);
 connect_status_t connection_start_connect(connection_t* conn, struct sockaddr_in addr);

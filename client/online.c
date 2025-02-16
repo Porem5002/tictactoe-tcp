@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <winsock2.h>
-#include <ws2tcpip.h>
 
 #include "ai.h"
 #include "ui.h"
 #include "scene.h"
+#include "config.h"
 
 #include "../shared/net.h"
 
@@ -42,6 +42,9 @@ typedef struct
     ui_button_t back_btn;
     ui_button_t reset_btn;
 
+    char* server_name;
+    unsigned short server_port;
+
     mode_t mode;
     float conn_timeout;
 
@@ -63,30 +66,45 @@ static void* scene_make(scene_persistent_data_t pdata)
     reset_btn.position = (quartz_vec2){ 0, -200 };
     reset_btn.scale = (quartz_vec2){ 100, 40 };
 
-    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-    assert(sock != INVALID_SOCKET);
-
-    struct sockaddr_in serv_addr = {0};
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    serv_addr.sin_port = htons(7777);
-    
-    connection_t conn = connection_init(sock, true);
-    connection_start_connect(&conn, serv_addr);
+    ctx.back_btn = back_btn;
+    ctx.reset_btn = reset_btn;
 
     ctx.viewport = pdata.viewport;
     ctx.font = pdata.font;
     ctx.camera = pdata.camera;
 
-    ctx.back_btn = back_btn;
-    ctx.reset_btn = reset_btn;
-
     ctx.mode = MODE_CONNECTING;
     ctx.conn_timeout = 2;
-    ctx.conn = conn;
     ctx.player = NO_PLAYER;
     ctx.board = board_make(3);
     ctx.winner = NO_PLAYER;
+
+    if(!online_config_load_from_file("config/online.txt", &ctx.server_name, &ctx.server_port))
+    {
+        ctx.mode = MODE_FAILED_CONNECT;
+        return &ctx;
+    }
+
+    IN_ADDR server_ip;
+
+    if(!net_get_ip_fom_name(ctx.server_name, &server_ip))
+    {
+        ctx.mode = MODE_FAILED_CONNECT;
+        return &ctx;
+    }
+    
+    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+    assert(sock != INVALID_SOCKET);
+
+    struct sockaddr_in serv_addr = {0};
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr = server_ip;
+    serv_addr.sin_port = htons(ctx.server_port);
+    
+    connection_t conn = connection_init(sock, true);
+    connection_start_connect(&conn, serv_addr);
+
+    ctx.conn = conn;
 
     return &ctx;
 }
@@ -285,5 +303,6 @@ static void scene_free(void* ctx_)
 
     connection_close(&ctx->conn);
     board_free(&ctx->board);
+    free(ctx->server_name);
     memset(ctx, 0, sizeof(*ctx));
 }
