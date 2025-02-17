@@ -1,9 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "ai.h"
 #include "ui.h"
 #include "scene.h"
+#include "config.h"
 
 #include <quartz/quartz.h>
 
@@ -28,6 +30,8 @@ typedef struct
     ui_button_t back_btn;
     ui_button_t reset_btn;
 
+    bool successful_load;
+
     game_t game;
     bool is_ai [3];
 } context_t;
@@ -50,9 +54,12 @@ static void* scene_make(scene_persistent_data_t pdata)
 
     ctx.back_btn = back_btn;
     ctx.reset_btn = reset_btn;
+    ctx.successful_load = true;
     ctx.game = game_make(3, PLAYER_1);
-    ctx.is_ai[PLAYER_1] = true;
-    ctx.is_ai[PLAYER_2] = false;
+
+    if(!localhost_config_load_from_file("config/localhost.txt", &ctx.is_ai[PLAYER_1], &ctx.is_ai[PLAYER_2]))
+        ctx.successful_load = false;
+    
     return &ctx;
 }
 
@@ -80,53 +87,64 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     ctx->reset_btn.disabled = ctx->game.running;
     ui_check_button_hover(&ctx->reset_btn, mouse_pos);
 
-    if(!ctx->game.running)
+    if(ctx->successful_load)
     {
-        if(ctx->reset_btn.hovered && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
-            game_restart(&ctx->game);
-    }
-    else
-    {
-        int x, y;
-
-        if(ctx->is_ai[ctx->game.curr_player])
+        if(!ctx->game.running)
         {
-            ai_next_move(&ctx->game.board, &x, &y, ctx->game.curr_player);
-            game_do_move(&ctx->game, x, y);
+            if(ctx->reset_btn.hovered && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
+                game_restart(&ctx->game);
         }
-        else if(quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
+        else
         {
-            if(ui_match_point_to_board_cell(ui_info, &ctx->game.board, mouse_pos, &x, &y))
+            int x, y;
+
+            if(ctx->is_ai[ctx->game.curr_player])
+            {
+                ai_next_move(&ctx->game.board, &x, &y, ctx->game.curr_player);
                 game_do_move(&ctx->game, x, y);
+            }
+            else if(quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
+            {
+                if(ui_match_point_to_board_cell(ui_info, &ctx->game.board, mouse_pos, &x, &y))
+                    game_do_move(&ctx->game, x, y);
+            }
         }
     }
 
     quartz_clear(ui_info.background_color);
 
-    if(!ctx->game.running)
+    if(ctx->successful_load)
     {
-        player_t winner;
-        board_is_final(&ctx->game.board, &winner);
+        if(!ctx->game.running)
+        {
+            player_t winner;
+            board_is_final(&ctx->game.board, &winner);
 
-        const char* winner_text = ui_get_winner_text(winner);
-        quartz_vec2 winner_text_pos = { 0, 200 };
-        ui_draw_text_centered(ctx->font, 30, winner_text, winner_text_pos, UI_WHITE_COLOR);
+            const char* winner_text = ui_get_winner_text(winner);
+            quartz_vec2 winner_text_pos = { 0, 200 };
+            ui_draw_text_centered(ctx->font, 30, winner_text, winner_text_pos, UI_WHITE_COLOR);
+        }
+
+        ui_draw_board(ui_info, &ctx->game.board);
+
+        // Draw cell highlight
+        int x, y;
+
+        if(ctx->game.running && ui_match_point_to_board_cell(ui_info, &ctx->game.board, mouse_pos, &x, &y)
+        && board_get_cell(&ctx->game.board, x, y) == NO_PLAYER)
+        {
+            quartz_vec2 point;
+            ui_match_board_cell_to_point(ui_info, &ctx->game.board, x, y, &point);
+            
+            quartz_color highlight_color = UI_WHITE_COLOR;
+            highlight_color.a = 0.20;
+            quartz_render2D_quad(highlight_color, point, (quartz_vec2){ui_info.cell_diplay_size, ui_info.cell_diplay_size}, 0.0f);
+        }
+
     }
-
-    ui_draw_board(ui_info, &ctx->game.board);
-
-    // Draw cell highlight
-    int x, y;
-
-    if(ctx->game.running && ui_match_point_to_board_cell(ui_info, &ctx->game.board, mouse_pos, &x, &y)
-       && board_get_cell(&ctx->game.board, x, y) == NO_PLAYER)
+    else
     {
-        quartz_vec2 point;
-        ui_match_board_cell_to_point(ui_info, &ctx->game.board, x, y, &point);
-        
-        quartz_color highlight_color = UI_WHITE_COLOR;
-        highlight_color.a = 0.20;
-        quartz_render2D_quad(highlight_color, point, (quartz_vec2){ui_info.cell_diplay_size, ui_info.cell_diplay_size}, 0.0f);
+        ui_draw_text_centered(ctx->font, 30, "Config file does not exist or could not be loaded", (quartz_vec2){0}, UI_RED_COLOR);
     }
     
     ui_draw_button(&ctx->back_btn, ctx->font, 35, "<", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
