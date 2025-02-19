@@ -7,6 +7,9 @@
 
 #include "../shared/game.h"
 
+#define UI_DEG2RAD (3.1415f/180)
+#define UI_RAD2DEG (180/3.1415f)
+
 #define ui_rgb(R, G, B) ((quartz_color){ (R)/255.0f, (G)/255.0f, (B)/255.0f, 1.0f })
 #define ui_norm_rgb(R, G, B) ((quartz_color){ (R), (G), (B), 1.0f })
 

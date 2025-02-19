@@ -293,7 +293,26 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
         ui_draw_text_centered(ctx->font, 30, text, pos, color);
     }
 
-    ui_draw_button(&ctx->back_btn, ctx->font, 35, "<", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
+    if(ctx->mode == MODE_PLAYING || ctx->mode == MODE_FINISHED)
+    {
+        const char* player1_s = ctx->player == PLAYER_1 ? "You" : "Opponent";
+        const char* player2_s = ctx->player == PLAYER_2 ? "You" : "Opponent";
+
+        ui_draw_X(UI_RED_COLOR, (quartz_vec2){-300, 0}, 100);
+        ui_draw_text_centered(ctx->font, 25, player1_s, (quartz_vec2){-300, -70}, UI_WHITE_COLOR);
+
+        ui_draw_O(UI_BLUE_COLOR, UI_BLACK_COLOR, (quartz_vec2){300, 0}, 100);
+        ui_draw_text_centered(ctx->font, 25, player2_s, (quartz_vec2){300, -70}, UI_WHITE_COLOR);
+    }
+
+    ui_draw_button(&ctx->back_btn, ctx->font, 35, "", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
+    
+    quartz_vec2 back_text_scale = {
+        -1 * 35.0f/quartz_texture_get_info(selector->pdata.arrow_texture).width,
+        35.0f/quartz_texture_get_info(selector->pdata.arrow_texture).height
+    };
+    quartz_render2D_texture(selector->pdata.arrow_texture, ctx->back_btn.position, back_text_scale, UI_DEG2RAD * -90, QUARTZ_WHITE);
+
     quartz_render2D_flush();
 }
 

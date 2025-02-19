@@ -12,6 +12,8 @@ typedef struct
     quartz_viewport viewport;
     quartz_font font;
     const quartz_camera2D* camera;
+
+    quartz_texture arrow_texture;
 } scene_persistent_data_t;
 
 typedef struct

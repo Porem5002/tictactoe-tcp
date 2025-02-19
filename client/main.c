@@ -21,7 +21,7 @@ int main(void)
     quartz_render2D_set_viewport(game_vp);
     quartz_render2D_set_camera(&camera);
 
-    scene_persistent_data_t pdata = { game_vp, font, &camera };
+    scene_persistent_data_t pdata = { game_vp, font, &camera, quartz_load_texture("assets/textures/arrow.png") };
     scene_selector_t selector = scene_selector_make(pdata, menu_scene);
 
     while(quartz_update())
