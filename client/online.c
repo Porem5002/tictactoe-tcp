@@ -63,8 +63,8 @@ static void* scene_make(scene_persistent_data_t pdata)
     back_btn.scale = (quartz_vec2){ 60, 60 };
 
     ui_button_t reset_btn = {0};
-    reset_btn.position = (quartz_vec2){ 0, -200 };
-    reset_btn.scale = (quartz_vec2){ 100, 40 };
+    reset_btn.position = (quartz_vec2){ 0, -240 };
+    reset_btn.scale = (quartz_vec2){ 100, 50 };
 
     ctx.back_btn = back_btn;
     ctx.reset_btn = reset_btn;
@@ -258,8 +258,8 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     else if(ctx->mode == MODE_FINISHED)
     {
         const char* winner_text = ui_get_winner_text(ctx->winner);
-        quartz_vec2 winner_text_pos = {0, 200};
-        ui_draw_text_centered(ctx->font, 30, winner_text, winner_text_pos, UI_WHITE_COLOR);
+        quartz_vec2 winner_text_pos = {0, 240};
+        ui_draw_text_centered(ctx->font, 50, winner_text, winner_text_pos, UI_WHITE_COLOR);
         ui_draw_board(ui_info, &ctx->board);
         ui_draw_button(&ctx->reset_btn, ctx->font, 25, "Reset", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
     }
