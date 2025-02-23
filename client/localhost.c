@@ -141,32 +141,31 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
             quartz_render2D_quad(highlight_color, point, (quartz_vec2){ui_info.cell_diplay_size, ui_info.cell_diplay_size}, 0.0f);
         }
 
+        const char* player1_s = "Player 1";
+        const char* player2_s = "Player 2";
+    
+        if(ctx->is_ai[PLAYER_1] && ctx->is_ai[PLAYER_2])
+        {
+            player1_s = "AI";
+            player2_s = "AI";
+        }
+        else if(ctx->is_ai[PLAYER_1] || ctx->is_ai[PLAYER_2])
+        {
+            player1_s = ctx->is_ai[PLAYER_1] ? "AI" : "Player";
+            player2_s = ctx->is_ai[PLAYER_2] ? "AI" : "Player";
+        }
+    
+        ui_draw_X(UI_RED_COLOR, (quartz_vec2){-300, 0}, 100);
+        ui_draw_text_centered(ctx->font, 25, player1_s, (quartz_vec2){-300, -70}, UI_WHITE_COLOR);
+    
+        ui_draw_O(UI_BLUE_COLOR, UI_BLACK_COLOR, (quartz_vec2){300, 0},100);
+        ui_draw_text_centered(ctx->font, 25, player2_s, (quartz_vec2){300, -70}, UI_WHITE_COLOR);
     }
     else
     {
         ui_draw_text_centered(ctx->font, 30, "Config file does not exist or could not be loaded", (quartz_vec2){0}, UI_RED_COLOR);
     }
     
-    const char* player1_s = "Player 1";
-    const char* player2_s = "Player 2";
-
-    if(ctx->is_ai[PLAYER_1] && ctx->is_ai[PLAYER_2])
-    {
-        player1_s = "AI";
-        player2_s = "AI";
-    }
-    else if(ctx->is_ai[PLAYER_1] || ctx->is_ai[PLAYER_2])
-    {
-        player1_s = ctx->is_ai[PLAYER_1] ? "AI" : "Player";
-        player2_s = ctx->is_ai[PLAYER_2] ? "AI" : "Player";
-    }
-
-    ui_draw_X(UI_RED_COLOR, (quartz_vec2){-300, 0}, 100);
-    ui_draw_text_centered(ctx->font, 25, player1_s, (quartz_vec2){-300, -70}, UI_WHITE_COLOR);
-
-    ui_draw_O(UI_BLUE_COLOR, UI_BLACK_COLOR, (quartz_vec2){300, 0}, 100);
-    ui_draw_text_centered(ctx->font, 25, player2_s, (quartz_vec2){300, -70}, UI_WHITE_COLOR);
-
     ui_draw_button(&ctx->back_btn, ctx->font, 1, "", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
 
     quartz_vec2 back_text_scale = { 
