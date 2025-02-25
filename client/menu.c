@@ -25,9 +25,18 @@ typedef struct
     quartz_font font;
     const quartz_camera2D* camera;
 
+    ui_text_t title_text;
+
     ui_button_t localhost_btn;
+    ui_text_t localhost_text;
+
     ui_button_t online_btn;
+    ui_text_t online_text;
+
     ui_button_t quit_btn;
+    ui_text_t quit_text;
+
+    anim_property_t anims [30];
 } context_t;
 
 static context_t ctx = {0};
@@ -35,52 +44,123 @@ static context_t ctx = {0};
 static void* scene_make(scene_persistent_data_t pdata)
 {
     quartz_vec2 btn_scale = { 200, 80 };
+    float font_size = 24;
 
-    ui_button_t localhost_btn = {0};
-    localhost_btn.position = (quartz_vec2){0, 100};
-    localhost_btn.scale = btn_scale;
+    ctx.title_text = (ui_text_t){
+        .font = pdata.font,
+        .font_size = 50,
+        .text = "TicTacToe",
+        .position = (quartz_vec2){0, 240},
+        .color = UI_GREEN_COLOR,
+    };
 
-    ui_button_t online_btn = {0};
-    online_btn.position = (quartz_vec2){0, -10};
-    online_btn.scale = btn_scale;
+    ctx.localhost_btn = (ui_button_t){
+        .color = UI_GREEN_COLOR,
+        .position = (quartz_vec2){0, 100},
+        .scale = btn_scale,
+    };
 
-    ui_button_t quit_btn = {0};
-    quit_btn.position = (quartz_vec2){0, -120};
-    quit_btn.scale = btn_scale;
+    ctx.localhost_text = (ui_text_t){
+        .font = pdata.font,
+        .font_size = font_size,
+        .text = "Localhost",
+        .position = ctx.localhost_btn.position, 
+        .color = UI_BLACK_COLOR,
+    };
+
+    ctx.online_btn = (ui_button_t){
+        .color = UI_GREEN_COLOR,
+        .position = (quartz_vec2){0, -10},
+        .scale = btn_scale,
+    };
+    
+    ctx.online_text = (ui_text_t){
+        .font = pdata.font,
+        .font_size = font_size,
+        .text = "Online",
+        .position = ctx.online_btn.position, 
+        .color = UI_BLACK_COLOR,
+    };
+
+    ctx.quit_btn = (ui_button_t){
+        .color = UI_GREEN_COLOR,
+        .position = (quartz_vec2){0, -120},
+        .scale = btn_scale,
+    };
+
+    ctx.quit_text = (ui_text_t){
+        .font = pdata.font,
+        .font_size = font_size,
+        .text = "Quit",
+        .position = ctx.quit_btn.position, 
+        .color = UI_BLACK_COLOR,
+    };
+
+    anim_writer_t wr = {
+        .cap = sizeof(ctx.anims) / sizeof(anim_property_t),
+        .buffer = ctx.anims,
+    };
+
+    anim_t base_anim = (anim_t){ .duration = 0.15 };
+
+    struct {
+        ui_button_t* btn;
+        ui_text_t* text;
+    } ui_elems [] = {
+        { &ctx.localhost_btn, &ctx.localhost_text },
+        { &ctx.online_btn, &ctx.online_text },
+        { &ctx.quit_btn, &ctx.quit_text }
+    };
+
+    for(size_t i = 0; i < 3; i++)
+    {
+        ui_button_t* btn = ui_elems[i].btn;
+        ui_text_t* text = ui_elems[i].text;
+
+        anim_writer_rebase(&wr);
+
+        anim_writer_write_vec2(&wr, base_anim, btn_scale, (quartz_vec2){btn_scale.x + 10, btn_scale.y + 10}, &btn->scale);
+        anim_writer_write_color3(&wr, base_anim, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30), &btn->color);
+        anim_writer_write_float(&wr, base_anim, font_size, font_size + 2, &text->font_size);
+    
+        btn->anims_size = anim_writer_get_size(&wr);
+        btn->anims = anim_writer_get_baseptr(&wr);
+    }
 
     ctx.viewport = pdata.viewport;
     ctx.font = pdata.font;
     ctx.camera = pdata.camera;
-    ctx.localhost_btn = localhost_btn;
-    ctx.online_btn = online_btn;
-    ctx.quit_btn = quit_btn;
     return &ctx;
 }
 
 static void scene_update(scene_selector_t* selector, void* ctx_)
 {
     context_t* ctx = ctx_;
-    float font_size = 24;
 
     quartz_ivec2 mouse_screen_pos = quartz_get_mouse_pos();
     quartz_vec2 mouse_pos = quartz_camera2D_to_world_through_viewport(ctx->camera, mouse_screen_pos, ctx->viewport);
 
-    ui_draw_text_centered(ctx->font, 50, "TicTacToe", (quartz_vec2){0, 240}, UI_GREEN_COLOR);
-
-    if(ui_check_button_hover(&ctx->localhost_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
+    if(ui_button_update(&ctx->localhost_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
         scene_selector_change(selector, localhost_scene);
 
-    if(ui_check_button_hover(&ctx->online_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
+    if(ui_button_update(&ctx->online_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
         scene_selector_change(selector, online_scene);
 
-    if(ui_check_button_hover(&ctx->quit_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
+    if(ui_button_update(&ctx->quit_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
         quartz_quit();
 
     quartz_clear(UI_BLACK_COLOR);
 
-    ui_draw_button(&ctx->localhost_btn, ctx->font, font_size, "Localhost", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
-    ui_draw_button(&ctx->online_btn, ctx->font, font_size, "Online", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
-    ui_draw_button(&ctx->quit_btn, ctx->font, font_size, "Quit", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
+    ui_text_draw(&ctx->title_text);
+
+    ui_button_draw(&ctx->localhost_btn);
+    ui_text_draw(&ctx->localhost_text);
+
+    ui_button_draw(&ctx->online_btn);
+    ui_text_draw(&ctx->online_text);
+
+    ui_button_draw(&ctx->quit_btn);
+    ui_text_draw(&ctx->quit_text);
 
     quartz_render2D_flush();
 }

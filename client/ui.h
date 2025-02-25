@@ -5,6 +5,8 @@
 
 #include <quartz/quartz.h>
 
+#include "anim.h"
+
 #include "../shared/game.h"
 
 #define UI_DEG2RAD (3.1415f/180)
@@ -22,11 +24,34 @@
 
 typedef struct
 {
-    bool disabled;
-    bool hovered;
+    size_t anims_size;
+    anim_property_t* anims;
+
+    quartz_color color;
     quartz_vec2 position;
     quartz_vec2 scale;
+
+    bool selected;
+    bool disabled;
 } ui_button_t;
+
+typedef struct
+{
+    quartz_font font;
+    float font_size;
+    const char* text;
+    quartz_vec2 position;
+    quartz_color color;
+} ui_text_t;
+
+typedef struct
+{
+    quartz_texture texture;
+    quartz_vec2 position;
+    quartz_vec2 scale;
+    quartz_color tint;
+    float rotation;
+} ui_texture_t;
 
 typedef struct
 {
@@ -54,10 +79,13 @@ const char* ui_get_winner_text(player_t winner);
 void ui_draw_board(ui_info_t info, const board_t* b);
 void ui_draw_X(quartz_color color, quartz_vec2 pos, float size);
 void ui_draw_O(quartz_color outer_color, quartz_color inner_color, quartz_vec2 pos, float size);
-void ui_draw_text_centered(quartz_font font, float font_size, const char* text, quartz_vec2 pos, quartz_color color);
+void ui_text_draw_inline(quartz_font font, float font_size, const char* text, quartz_vec2 pos, quartz_color color);
 
-quartz_aabb2 ui_get_button_aabb(const ui_button_t* btn);
-bool ui_check_button_hover(ui_button_t* btn, quartz_vec2 point);
-void ui_draw_button(const ui_button_t* btn, quartz_font font, float font_size, const char* text, quartz_color text_color, quartz_color base_color, quartz_color hover_color);
+quartz_aabb2 ui_button_get_aabb(const ui_button_t* btn);
+bool ui_button_update(ui_button_t* btn, quartz_vec2 point);
+void ui_button_draw(const ui_button_t* btn);
+
+void ui_text_draw(const ui_text_t* text);
+void ui_texture_draw(const ui_texture_t* texture);
 
 #endif

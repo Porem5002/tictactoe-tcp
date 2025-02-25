@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 #include <winsock2.h>
 
 #include "ai.h"
@@ -40,7 +41,10 @@ typedef struct
     const quartz_camera2D* camera;
 
     ui_button_t back_btn;
+    ui_texture_t back_texture;
+
     ui_button_t reset_btn;
+    ui_text_t reset_text;
 
     char* server_name;
     unsigned short server_port;
@@ -52,22 +56,64 @@ typedef struct
     player_t player;
     board_t board;
     player_t winner;
+
+    anim_property_t anims [13];
 } context_t;
 
 static context_t ctx;
 
 static void* scene_make(scene_persistent_data_t pdata)
 {
-    ui_button_t back_btn = {0};
-    back_btn.position = (quartz_vec2){ -400 + 60, 300 - 60 };
-    back_btn.scale = (quartz_vec2){ 60, 60 };
+    anim_writer_t wr = {
+        .cap = sizeof(ctx.anims) / sizeof(anim_property_t),
+        .buffer = ctx.anims,
+    };
 
-    ui_button_t reset_btn = {0};
-    reset_btn.position = (quartz_vec2){ 0, -240 };
-    reset_btn.scale = (quartz_vec2){ 100, 50 };
+    anim_t base_anim = { .duration = 0.15 };
 
-    ctx.back_btn = back_btn;
-    ctx.reset_btn = reset_btn;
+    ctx.back_btn = (ui_button_t){
+        .color = UI_GREEN_COLOR,
+        .position = (quartz_vec2){ -400 + 60, 300 - 60 },
+        .scale = (quartz_vec2){ 60, 60 },
+    };
+
+    ctx.back_texture = (ui_texture_t){
+        .texture = pdata.arrow_texture,
+        .position = ctx.back_btn.position,
+        .scale = { 35.0f, 35.0f },
+        .tint = QUARTZ_WHITE,
+        .rotation = UI_DEG2RAD * -90.0f,
+    };
+
+    anim_writer_write_vec2(&wr, base_anim, ctx.back_btn.scale, (quartz_vec2){ctx.back_btn.scale.x + 10,ctx.back_btn.scale.y + 10}, &ctx.back_btn.scale);
+    anim_writer_write_color3(&wr, base_anim, ctx.back_btn.color, ui_ligthen_color(ctx.back_btn.color, 0.30), &ctx.back_btn.color);
+    anim_writer_write_vec2(&wr, base_anim, ctx.back_texture.scale, (quartz_vec2){ctx.back_texture.scale.x + 5,ctx.back_texture.scale.y + 5}, &ctx.back_texture.scale);
+
+    ctx.back_btn.anims_size = anim_writer_get_size(&wr);
+    ctx.back_btn.anims = anim_writer_get_baseptr(&wr);
+
+    ctx.reset_btn = (ui_button_t){
+        .color = UI_GREEN_COLOR,
+        .position = (quartz_vec2){ 0, -240 },
+        .scale = (quartz_vec2){ 100, 50 },
+    };
+
+    ctx.reset_text = (ui_text_t){
+        .font = pdata.font,
+        .font_size = 25,
+        .text = "Reset",
+        .position = ctx.reset_btn.position,
+        .color = UI_BLACK_COLOR,
+    };
+
+    anim_writer_rebase(&wr);
+
+    anim_writer_write_vec2(&wr, base_anim, ctx.reset_btn.scale, (quartz_vec2){ctx.reset_btn.scale.x+10,ctx.reset_btn.scale.y+10}, &ctx.reset_btn.scale);
+    anim_writer_write_color3(&wr, base_anim, ctx.reset_btn.color, ui_ligthen_color(ctx.reset_btn.color, 0.30), &ctx.reset_btn.color);
+    anim_writer_write_float(&wr, base_anim, ctx.reset_text.font_size, ctx.reset_text.font_size + 2, &ctx.reset_text.font_size);
+
+    ctx.reset_btn.anims_size = anim_writer_get_size(&wr);
+    ctx.reset_btn.anims = anim_writer_get_baseptr(&wr);
 
     ctx.viewport = pdata.viewport;
     ctx.font = pdata.font;
@@ -127,7 +173,9 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     quartz_ivec2 mouse_screen_pos = quartz_get_mouse_pos();
     quartz_vec2 mouse_pos = quartz_camera2D_to_world_through_viewport(ctx->camera, mouse_screen_pos, ctx->viewport);
 
-    if(ui_check_button_hover(&ctx->back_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
+    ctx->reset_btn.disabled = ctx->mode != MODE_FINISHED;
+
+    if(ui_button_update(&ctx->back_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
         scene_selector_change(selector, menu_scene);
 
     switch(ctx->mode)
@@ -205,6 +253,8 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
                     break;
                 }
             }
+
+            // TODO: Add player symbol animations according to current player
         }
         break;
         case MODE_FINISHED:
@@ -221,7 +271,7 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
                 }
             }
 
-            if(ui_check_button_hover(&ctx->reset_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
+            if(ui_button_update(&ctx->reset_btn, mouse_pos) && quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN))
             {
                 packet_t p = {0};
                 p.kind = PACKET_KIND_REQUEST_RESET;
@@ -259,9 +309,8 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     {
         const char* winner_text = ui_get_winner_text(ctx->winner);
         quartz_vec2 winner_text_pos = {0, 240};
-        ui_draw_text_centered(ctx->font, 50, winner_text, winner_text_pos, UI_WHITE_COLOR);
+        ui_text_draw_inline(ctx->font, 50, winner_text, winner_text_pos, UI_WHITE_COLOR);
         ui_draw_board(ui_info, &ctx->board);
-        ui_draw_button(&ctx->reset_btn, ctx->font, 25, "Reset", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
     }
     else
     {
@@ -290,7 +339,7 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
         }
 
         quartz_vec2 pos = {0};
-        ui_draw_text_centered(ctx->font, 30, text, pos, color);
+        ui_text_draw_inline(ctx->font, 30, text, pos, color);
     }
 
     if(ctx->mode == MODE_PLAYING || ctx->mode == MODE_FINISHED)
@@ -299,19 +348,17 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
         const char* player2_s = ctx->player == PLAYER_2 ? "You" : "Opponent";
 
         ui_draw_X(UI_RED_COLOR, (quartz_vec2){-300, 0}, 100);
-        ui_draw_text_centered(ctx->font, 25, player1_s, (quartz_vec2){-300, -70}, UI_WHITE_COLOR);
+        ui_text_draw_inline(ctx->font, 25, player1_s, (quartz_vec2){-300, -70}, UI_WHITE_COLOR);
 
         ui_draw_O(UI_BLUE_COLOR, UI_BLACK_COLOR, (quartz_vec2){300, 0}, 100);
-        ui_draw_text_centered(ctx->font, 25, player2_s, (quartz_vec2){300, -70}, UI_WHITE_COLOR);
+        ui_text_draw_inline(ctx->font, 25, player2_s, (quartz_vec2){300, -70}, UI_WHITE_COLOR);
     }
 
-    ui_draw_button(&ctx->back_btn, ctx->font, 35, "", UI_BLACK_COLOR, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30));
-    
-    quartz_vec2 back_text_scale = {
-        -1 * 35.0f/quartz_texture_get_info(selector->pdata.arrow_texture).width,
-        35.0f/quartz_texture_get_info(selector->pdata.arrow_texture).height
-    };
-    quartz_render2D_texture(selector->pdata.arrow_texture, ctx->back_btn.position, back_text_scale, UI_DEG2RAD * -90, QUARTZ_WHITE);
+    ui_button_draw(&ctx->back_btn);
+    ui_texture_draw(&ctx->back_texture);
+
+    ui_button_draw(&ctx->reset_btn);
+    ui_text_draw(&ctx->reset_text);
 
     quartz_render2D_flush();
 }

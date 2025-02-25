@@ -126,7 +126,7 @@ void ui_draw_O(quartz_color outer_color, quartz_color inner_color, quartz_vec2 p
     quartz_render2D_circle(inner_color, pos, size/3);
 }
 
-void ui_draw_text_centered(quartz_font font, float font_size, const char* text, quartz_vec2 pos, quartz_color color)
+void ui_text_draw_inline(quartz_font font, float font_size, const char* text, quartz_vec2 pos, quartz_color color)
 {
     quartz_vec2 text_size = quartz_font_get_text_size(font, font_size, text);
     pos.x -= text_size.x/2;
@@ -134,25 +134,47 @@ void ui_draw_text_centered(quartz_font font, float font_size, const char* text, 
     quartz_render2D_text(font, font_size, text, pos, color);
 }
 
-quartz_aabb2 ui_get_button_aabb(const ui_button_t* btn)
+quartz_aabb2 ui_button_get_aabb(const ui_button_t* btn)
 {
-    quartz_aabb2 box = { .x = btn->position.x, .y = btn->position.y, .hwidth = btn->scale.x/2, .hheight = btn->scale.y/2 };
-    return box;
+    quartz_aabb2 aabb = {
+        .x = btn->position.x,
+        .y = btn->position.y,
+        .hwidth = btn->scale.x/2.0f,
+        .hheight = btn->scale.y/2.0f
+    };
+    return aabb;
 }
 
-bool ui_check_button_hover(ui_button_t* btn, quartz_vec2 point)
+bool ui_button_update(ui_button_t* btn, quartz_vec2 point)
 {
-    if(btn->disabled) return btn->hovered = false;
+    quartz_aabb2 aabb = ui_button_get_aabb(btn);
+    btn->selected = !btn->disabled && quartz_aabb2_touches_point(point, aabb);
 
-    quartz_aabb2 box = ui_get_button_aabb(btn);
-    return btn->hovered = quartz_aabb2_touches_point(point, box);
+    float dt = quartz_get_delta_time();
+    if(!btn->selected) dt *= -1;
+
+    for(size_t i = 0; i < btn->anims_size; i++)
+        anim_property_update(&btn->anims[i], dt);
+
+    return btn->selected;
 }
 
-void ui_draw_button(const ui_button_t* btn, quartz_font font, float font_size, const char* text, quartz_color text_color, quartz_color base_color, quartz_color hover_color)
+void ui_button_draw(const ui_button_t* btn)
 {
-    if(btn->disabled) return;
+    if(!btn->disabled)
+        quartz_render2D_quad(btn->color, btn->position, btn->scale, 0.0f);
+}
 
-    quartz_color color = btn->hovered ? hover_color : base_color;
-    quartz_render2D_quad(color, btn->position, btn->scale, 0.0f);
-    ui_draw_text_centered(font, font_size, text, btn->position, text_color);
+void ui_text_draw(const ui_text_t* text)
+{
+    ui_text_draw_inline(text->font, text->font_size, text->text, text->position, text->color);
+}
+
+void ui_texture_draw(const ui_texture_t* texture)
+{
+    quartz_vec2 back_text_scale = { 
+        texture->scale.x/quartz_texture_get_info(texture->texture).width,
+        texture->scale.y/quartz_texture_get_info(texture->texture).height
+    };
+    quartz_render2D_texture(texture->texture, texture->position, back_text_scale, texture->rotation, texture->tint);
 }
