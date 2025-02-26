@@ -54,9 +54,11 @@ typedef struct
 
     connection_t conn;
     player_t player;
-    board_t board;
+    game_t game;
     player_t winner;
 
+    anim_property_t player1_my_turn_anim;
+    anim_property_t player2_my_turn_anim;
     anim_property_t anims [13];
 } context_t;
 
@@ -67,13 +69,6 @@ static const char* get_winner_text(player_t player, player_t me);
 
 static void* scene_make(scene_persistent_data_t pdata)
 {
-    anim_writer_t wr = {
-        .cap = sizeof(ctx.anims) / sizeof(anim_property_t),
-        .buffer = ctx.anims,
-    };
-
-    anim_t base_anim = { .duration = 0.15 };
-
     ctx.back_btn = (ui_button_t){
         .color = UI_GREEN_COLOR,
         .position = (quartz_vec2){ -400 + 60, 300 - 60 },
@@ -87,13 +82,6 @@ static void* scene_make(scene_persistent_data_t pdata)
         .tint = QUARTZ_WHITE,
         .rotation = UI_DEG2RAD * -90.0f,
     };
-
-    anim_writer_write_vec2(&wr, base_anim, ctx.back_btn.scale, (quartz_vec2){ctx.back_btn.scale.x + 10,ctx.back_btn.scale.y + 10}, &ctx.back_btn.scale);
-    anim_writer_write_color3(&wr, base_anim, ctx.back_btn.color, ui_ligthen_color(ctx.back_btn.color, 0.30), &ctx.back_btn.color);
-    anim_writer_write_vec2(&wr, base_anim, ctx.back_texture.scale, (quartz_vec2){ctx.back_texture.scale.x + 5,ctx.back_texture.scale.y + 5}, &ctx.back_texture.scale);
-
-    ctx.back_btn.anims_size = anim_writer_get_size(&wr);
-    ctx.back_btn.anims = anim_writer_get_baseptr(&wr);
 
     ctx.reset_btn = (ui_button_t){
         .color = UI_GREEN_COLOR,
@@ -109,14 +97,16 @@ static void* scene_make(scene_persistent_data_t pdata)
         .color = UI_BLACK_COLOR,
     };
 
-    anim_writer_rebase(&wr);
+    anim_writer_t wr = {
+        .cap = sizeof(ctx.anims) / sizeof(anim_property_t),
+        .buffer = ctx.anims,
+    };
 
-    anim_writer_write_vec2(&wr, base_anim, ctx.reset_btn.scale, (quartz_vec2){ctx.reset_btn.scale.x+10,ctx.reset_btn.scale.y+10}, &ctx.reset_btn.scale);
-    anim_writer_write_color3(&wr, base_anim, ctx.reset_btn.color, ui_ligthen_color(ctx.reset_btn.color, 0.30), &ctx.reset_btn.color);
-    anim_writer_write_float(&wr, base_anim, ctx.reset_text.font_size, ctx.reset_text.font_size + 2, &ctx.reset_text.font_size);
+    ui_fill_texture_button_anims(&wr, &ctx.back_btn, &ctx.back_texture);
+    ui_fill_text_button_anims(&wr, &ctx.reset_btn, &ctx.reset_text);
 
-    ctx.reset_btn.anims_size = anim_writer_get_size(&wr);
-    ctx.reset_btn.anims = anim_writer_get_baseptr(&wr);
+    ctx.player1_my_turn_anim = ui_get_player_my_turn_anim();
+    ctx.player2_my_turn_anim = ui_get_player_my_turn_anim();
 
     ctx.viewport = pdata.viewport;
     ctx.font = pdata.font;
@@ -125,7 +115,7 @@ static void* scene_make(scene_persistent_data_t pdata)
     ctx.mode = MODE_CONNECTING;
     ctx.conn_timeout = 2;
     ctx.player = NO_PLAYER;
-    ctx.board = board_make(3);
+    ctx.game = game_make(3, PLAYER_1);
     ctx.winner = NO_PLAYER;
 
     if(!online_config_load_from_file("config/online.txt", &ctx.server_name, &ctx.server_port))
@@ -226,7 +216,10 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
             while((status = packet_poll(&ctx->conn, &p)) == PACKET_STATUS_RECEIVED)
             {   
                 if(p.kind == PACKET_KIND_RESPONSE_MOVE)
-                    board_set_cell(&ctx->board, p.response_move.x, p.response_move.y, p.response_move.player);
+                {
+                    assert(ctx->game.curr_player == p.response_move.player);
+                    game_do_move(&ctx->game, p.response_move.x, p.response_move.y);
+                }
 
                 if(p.kind == PACKET_KIND_RESPONSE_WINNER)
                 {
@@ -243,7 +236,8 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
 
             int x, y;
             
-            if(quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN) && ui_match_point_to_board_cell(ui_info, &ctx->board, mouse_pos, &x, &y))
+            if(quartz_is_key_down(QUARTZ_KEY_L_MOUSE_BTN) &&
+               ui_match_point_to_board_cell(ui_info, &ctx->game.board, mouse_pos, &x, &y))
             {
                 packet_t p = {0};
                 p.kind = PACKET_KIND_REQUEST_MOVE;
@@ -257,7 +251,13 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
                 }
             }
 
-            // TODO: Add player symbol animations according to current player
+            if(ctx->game.curr_player == PLAYER_1 &&
+                anim_property_update(&ctx->player1_my_turn_anim, quartz_get_delta_time()) == ANIM_STATUS_FINISHED)
+                anim_property_reset(&ctx->player1_my_turn_anim);
+
+            if(ctx->game.curr_player == PLAYER_2 &&
+                anim_property_update(&ctx->player2_my_turn_anim, quartz_get_delta_time()) == ANIM_STATUS_FINISHED)
+                anim_property_reset(&ctx->player2_my_turn_anim);
         }
         break;
         case MODE_FINISHED:
@@ -270,7 +270,7 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
                 if(p.kind == PACKET_KIND_RESPONSE_RESET)
                 {
                     ctx->mode = MODE_PLAYING;
-                    board_clear(&ctx->board);
+                    game_restart(&ctx->game);
                 }
             }
 
@@ -292,16 +292,17 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     
     if(ctx->mode == MODE_PLAYING)
     {
-        ui_draw_board(ui_info, &ctx->board);
+        ui_draw_board(ui_info, &ctx->game.board);
 
         // Draw cell highlight
         int x, y;
 
-        if(ui_match_point_to_board_cell(ui_info, &ctx->board, mouse_pos, &x, &y)
-           && board_get_cell(&ctx->board, x, y) == NO_PLAYER)
+        if(ctx->player == ctx->game.curr_player
+           && ui_match_point_to_board_cell(ui_info, &ctx->game.board, mouse_pos, &x, &y)
+           && board_get_cell(&ctx->game.board, x, y) == NO_PLAYER)
         {
             quartz_vec2 point;
-            ui_match_board_cell_to_point(ui_info, &ctx->board, x, y, &point);
+            ui_match_board_cell_to_point(ui_info, &ctx->game.board, x, y, &point);
             
             quartz_color highlight_color = UI_WHITE_COLOR;
             highlight_color.a = 0.20;
@@ -313,7 +314,7 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
         const char* winner_text = get_winner_text(ctx->winner, ctx->player);
         quartz_vec2 winner_text_pos = {0, 240};
         ui_text_draw_inline(ctx->font, 45, winner_text, winner_text_pos, UI_WHITE_COLOR);
-        ui_draw_board(ui_info, &ctx->board);
+        ui_draw_board(ui_info, &ctx->game.board);
     }
     else
     {
@@ -350,10 +351,10 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
         const char* player1_s = get_player_text(PLAYER_1, ctx->player);
         const char* player2_s = get_player_text(PLAYER_2, ctx->player);
 
-        ui_draw_X(UI_RED_COLOR, (quartz_vec2){-300, 0}, 100);
+        ui_draw_X(UI_RED_COLOR, (quartz_vec2){-300, 0}, anim_property_get_value(&ctx->player1_my_turn_anim));
         ui_text_draw_inline(ctx->font, 25, player1_s, (quartz_vec2){-300, -70}, UI_WHITE_COLOR);
 
-        ui_draw_O(UI_BLUE_COLOR, UI_BLACK_COLOR, (quartz_vec2){300, 0}, 100);
+        ui_draw_O(UI_BLUE_COLOR, UI_BLACK_COLOR, (quartz_vec2){300, 0}, anim_property_get_value(&ctx->player2_my_turn_anim));
         ui_text_draw_inline(ctx->font, 25, player2_s, (quartz_vec2){300, -70}, UI_WHITE_COLOR);
     }
 
@@ -371,7 +372,7 @@ static void scene_free(void* ctx_)
     context_t* ctx = ctx_;
 
     connection_close(&ctx->conn);
-    board_free(&ctx->board);
+    board_free(&ctx->game.board);
     free(ctx->server_name);
     memset(ctx, 0, sizeof(*ctx));
 }

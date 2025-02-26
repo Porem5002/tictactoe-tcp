@@ -101,31 +101,9 @@ static void* scene_make(scene_persistent_data_t pdata)
         .buffer = ctx.anims,
     };
 
-    anim_t base_anim = (anim_t){ .duration = 0.15 };
-
-    struct {
-        ui_button_t* btn;
-        ui_text_t* text;
-    } ui_elems [] = {
-        { &ctx.localhost_btn, &ctx.localhost_text },
-        { &ctx.online_btn, &ctx.online_text },
-        { &ctx.quit_btn, &ctx.quit_text }
-    };
-
-    for(size_t i = 0; i < 3; i++)
-    {
-        ui_button_t* btn = ui_elems[i].btn;
-        ui_text_t* text = ui_elems[i].text;
-
-        anim_writer_rebase(&wr);
-
-        anim_writer_write_vec2(&wr, base_anim, btn_scale, (quartz_vec2){btn_scale.x + 10, btn_scale.y + 10}, &btn->scale);
-        anim_writer_write_color3(&wr, base_anim, UI_GREEN_COLOR, ui_ligthen_color(UI_GREEN_COLOR, 0.30), &btn->color);
-        anim_writer_write_float(&wr, base_anim, font_size, font_size + 2, &text->font_size);
-    
-        btn->anims_size = anim_writer_get_size(&wr);
-        btn->anims = anim_writer_get_baseptr(&wr);
-    }
+    ui_fill_text_button_anims(&wr, &ctx.localhost_btn, &ctx.localhost_text);
+    ui_fill_text_button_anims(&wr, &ctx.online_btn, &ctx.online_text);
+    ui_fill_text_button_anims(&wr, &ctx.quit_btn, &ctx.quit_text);
 
     ctx.viewport = pdata.viewport;
     ctx.font = pdata.font;

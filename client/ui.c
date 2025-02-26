@@ -167,3 +167,58 @@ void ui_texture_draw(const ui_texture_t* texture)
     };
     quartz_render2D_texture(texture->texture, texture->position, back_text_scale, texture->rotation, texture->tint);
 }
+
+anim_property_t ui_get_player_my_turn_anim()
+{
+    return (anim_property_t){ .anim = { .duration = 0.65, .ease = anim_sin01 }, .base = 90, .factor = 20 };
+}
+
+void ui_fill_texture_button_anims(anim_writer_t* wr, ui_button_t* btn, ui_texture_t* texture)
+{
+    assert(wr != NULL);
+    assert(btn != NULL);
+    assert(texture != NULL);
+
+    anim_t base_anim = { .duration = 0.15 };
+    float btn_scale_increase = 10;
+    float lighten_factor = 0.30;
+    float texture_scale_increase = 5;
+    
+    quartz_vec2 btn_end_scale = { btn->scale.x + btn_scale_increase, btn->scale.y + btn_scale_increase };
+    quartz_color btn_end_color = ui_ligthen_color(btn->color, lighten_factor);
+    quartz_vec2 texture_end_scale = { texture->scale.x + texture_scale_increase, texture->scale.y + texture_scale_increase };
+
+    anim_writer_rebase(wr);
+
+    anim_writer_write_vec2(wr, base_anim, btn->scale, btn_end_scale, &btn->scale);
+    anim_writer_write_color3(wr, base_anim, btn->color, btn_end_color, &btn->color);
+    anim_writer_write_vec2(wr, base_anim, texture->scale, texture_end_scale, &texture->scale);
+
+    btn->anims_size = anim_writer_get_size(wr);
+    btn->anims = anim_writer_get_baseptr(wr);
+}
+
+void ui_fill_text_button_anims(anim_writer_t* wr, ui_button_t* btn, ui_text_t* text)
+{
+    assert(wr != NULL);
+    assert(btn != NULL);
+    assert(text != NULL);
+
+    anim_t base_anim = { .duration = 0.15 };
+    float btn_scale_increase = 10;
+    float lighten_factor = 0.30;
+    float font_size_increase = 3;
+
+    quartz_vec2 btn_end_scale = (quartz_vec2){btn->scale.x + btn_scale_increase, btn->scale.y + btn_scale_increase};
+    quartz_color btn_end_color = ui_ligthen_color(btn->color, lighten_factor);
+    float text_end_font_size = text->font_size + font_size_increase;
+
+    anim_writer_rebase(wr);
+
+    anim_writer_write_vec2(wr, base_anim, btn->scale, btn_end_scale, &btn->scale);
+    anim_writer_write_color3(wr, base_anim, btn->color, btn_end_color, &btn->color);
+    anim_writer_write_float(wr, base_anim, text->font_size, text_end_font_size, &text->font_size);
+
+    btn->anims_size = anim_writer_get_size(wr);
+    btn->anims = anim_writer_get_baseptr(wr);
+}

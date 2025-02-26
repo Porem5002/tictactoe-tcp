@@ -52,13 +52,6 @@ static const char* get_winner_text(player_t player, bool is_player1_ai, bool is_
 
 static void* scene_make(scene_persistent_data_t pdata)
 {
-    anim_writer_t wr = {
-        .cap = sizeof(ctx.anims) / sizeof(anim_property_t),
-        .buffer = ctx.anims,
-    };
-
-    anim_t base_anim = { .duration = 0.15 };
-
     ctx.back_btn = (ui_button_t){
         .color = UI_GREEN_COLOR,
         .position = (quartz_vec2){ -400 + 60, 300 - 60 },
@@ -72,13 +65,6 @@ static void* scene_make(scene_persistent_data_t pdata)
         .tint = UI_WHITE_COLOR,
         .rotation = UI_DEG2RAD * -90,
     };
-
-    anim_writer_write_vec2(&wr, base_anim, ctx.back_btn.scale, (quartz_vec2){ctx.back_btn.scale.x + 10, ctx.back_btn.scale.y + 10}, &ctx.back_btn.scale);
-    anim_writer_write_color3(&wr, base_anim, ctx.back_btn.color, ui_ligthen_color(ctx.back_btn.color, 0.30), &ctx.back_btn.color);
-    anim_writer_write_vec2(&wr, base_anim, ctx.back_texture.scale, (quartz_vec2){ctx.back_texture.scale.x + 5, ctx.back_texture.scale.y + 5}, &ctx.back_texture.scale);
-
-    ctx.back_btn.anims_size = anim_writer_get_size(&wr);
-    ctx.back_btn.anims = anim_writer_get_baseptr(&wr);
 
     ctx.reset_btn = (ui_button_t){
         .color = UI_GREEN_COLOR,
@@ -94,17 +80,16 @@ static void* scene_make(scene_persistent_data_t pdata)
         .position = ctx.reset_btn.position,
     };
 
-    anim_writer_rebase(&wr);
+    anim_writer_t wr = {
+        .cap = sizeof(ctx.anims) / sizeof(anim_property_t),
+        .buffer = ctx.anims,
+    };
 
-    anim_writer_write_vec2(&wr, base_anim, ctx.reset_btn.scale, (quartz_vec2){ctx.reset_btn.scale.x + 10, ctx.reset_btn.scale.y + 10}, &ctx.reset_btn.scale);
-    anim_writer_write_color3(&wr, base_anim, ctx.reset_btn.color, ui_ligthen_color(ctx.reset_btn.color, 0.30), &ctx.reset_btn.color);
-    anim_writer_write_float(&wr, base_anim, ctx.reset_text.font_size, ctx.reset_text.font_size + 2, &ctx.reset_text.font_size);
+    ui_fill_texture_button_anims(&wr, &ctx.back_btn, &ctx.back_texture);
+    ui_fill_text_button_anims(&wr, &ctx.reset_btn, &ctx.reset_text);
 
-    ctx.reset_btn.anims_size = anim_writer_get_size(&wr);
-    ctx.reset_btn.anims = anim_writer_get_baseptr(&wr);
-
-    ctx.player1_my_turn_anim = (anim_property_t){ .anim = { .duration = 0.65, .ease = anim_sin01 }, .base = 90, .factor = 20 };
-    ctx.player2_my_turn_anim = (anim_property_t){ .anim = { .duration = 0.65, .ease = anim_sin01 }, .base = 90, .factor = 20 };
+    ctx.player1_my_turn_anim = ui_get_player_my_turn_anim();
+    ctx.player2_my_turn_anim = ui_get_player_my_turn_anim();
 
     ctx.successful_load = true;
     ctx.game = game_make(3, PLAYER_1);

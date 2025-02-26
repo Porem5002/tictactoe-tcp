@@ -87,4 +87,8 @@ void ui_button_draw(const ui_button_t* btn);
 void ui_text_draw(const ui_text_t* text);
 void ui_texture_draw(const ui_texture_t* texture);
 
+anim_property_t ui_get_player_my_turn_anim();
+void ui_fill_texture_button_anims(anim_writer_t* wr, ui_button_t* btn, ui_texture_t* texture);
+void ui_fill_text_button_anims(anim_writer_t* wr, ui_button_t* btn, ui_text_t* text);
+
 #endif
