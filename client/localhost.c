@@ -47,6 +47,9 @@ typedef struct
 
 static context_t ctx = {0};
 
+static const char* get_player_text(player_t player, bool is_player1_ai, bool is_player2_ai);
+static const char* get_winner_text(player_t player, bool is_player1_ai, bool is_player2_ai);
+
 static void* scene_make(scene_persistent_data_t pdata)
 {
     anim_writer_t wr = {
@@ -180,9 +183,9 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
             player_t winner;
             board_is_final(&ctx->game.board, &winner);
 
-            const char* winner_text = ui_get_winner_text(winner);
+            const char* winner_text = get_winner_text(winner, ctx->is_ai[PLAYER_1], ctx->is_ai[PLAYER_2]);
             quartz_vec2 winner_text_pos = { 0, 240 };
-            ui_text_draw_inline(ctx->font, 50, winner_text, winner_text_pos, UI_WHITE_COLOR);
+            ui_text_draw_inline(ctx->font, 45, winner_text, winner_text_pos, UI_WHITE_COLOR);
         }
 
         ui_draw_board(ui_info, &ctx->game.board);
@@ -201,19 +204,8 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
             quartz_render2D_quad(highlight_color, point, (quartz_vec2){ui_info.cell_diplay_size, ui_info.cell_diplay_size}, 0.0f);
         }
 
-        const char* player1_s = "Player 1";
-        const char* player2_s = "Player 2";
-    
-        if(ctx->is_ai[PLAYER_1] && ctx->is_ai[PLAYER_2])
-        {
-            player1_s = "AI";
-            player2_s = "AI";
-        }
-        else if(ctx->is_ai[PLAYER_1] || ctx->is_ai[PLAYER_2])
-        {
-            player1_s = ctx->is_ai[PLAYER_1] ? "AI" : "Player";
-            player2_s = ctx->is_ai[PLAYER_2] ? "AI" : "Player";
-        }
+        const char* player1_s = get_player_text(PLAYER_1, ctx->is_ai[PLAYER_1], ctx->is_ai[PLAYER_2]);
+        const char* player2_s = get_player_text(PLAYER_2, ctx->is_ai[PLAYER_1], ctx->is_ai[PLAYER_2]);
     
         ui_draw_X(UI_RED_COLOR, (quartz_vec2){-300, 0}, anim_property_get_value(&ctx->player1_my_turn_anim));
         ui_text_draw_inline(ctx->font, 25, player1_s, (quartz_vec2){-300, -70}, UI_WHITE_COLOR);
@@ -242,3 +234,33 @@ static void scene_free(void* ctx_)
     game_free(&ctx->game);
     memset(ctx, 0, sizeof(*ctx));
 }
+
+#define gen_player_to_string_func(NAME, STR_SUFFIX, ALLOW_NO_PLAYER, STR_NO_PLAYER)\
+const char* NAME(player_t player, bool is_player1_ai, bool is_player2_ai)\
+{\
+    if((ALLOW_NO_PLAYER) && player == NO_PLAYER) return STR_NO_PLAYER;\
+    \
+    assert(player == PLAYER_1 || player == PLAYER_2);\
+    \
+    if(is_player1_ai && is_player2_ai)\
+    {\
+        if(player == PLAYER_1) return "AI 1" STR_SUFFIX;\
+        if(player == PLAYER_2) return "AI 2" STR_SUFFIX;\
+        assert(false);\
+    }\
+    \
+    if(!is_player1_ai && !is_player2_ai)\
+    {\
+        if(player == PLAYER_1) return "Player 1" STR_SUFFIX;\
+        if(player == PLAYER_2) return "Player 2" STR_SUFFIX;\
+        assert(false);\
+    }\
+    \
+    if((is_player1_ai && player == PLAYER_1) || (is_player2_ai && player == PLAYER_2))\
+        return "AI" STR_SUFFIX;\
+    \
+    return "Player" STR_SUFFIX;\
+}
+
+static gen_player_to_string_func(get_player_text, "", false, "")
+static gen_player_to_string_func(get_winner_text, " Won", true, "Draw")

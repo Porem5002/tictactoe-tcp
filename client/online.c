@@ -62,6 +62,9 @@ typedef struct
 
 static context_t ctx;
 
+static const char* get_player_text(player_t player, player_t me);
+static const char* get_winner_text(player_t player, player_t me);
+
 static void* scene_make(scene_persistent_data_t pdata)
 {
     anim_writer_t wr = {
@@ -307,9 +310,9 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
     }
     else if(ctx->mode == MODE_FINISHED)
     {
-        const char* winner_text = ui_get_winner_text(ctx->winner);
+        const char* winner_text = get_winner_text(ctx->winner, ctx->player);
         quartz_vec2 winner_text_pos = {0, 240};
-        ui_text_draw_inline(ctx->font, 50, winner_text, winner_text_pos, UI_WHITE_COLOR);
+        ui_text_draw_inline(ctx->font, 45, winner_text, winner_text_pos, UI_WHITE_COLOR);
         ui_draw_board(ui_info, &ctx->board);
     }
     else
@@ -344,8 +347,8 @@ static void scene_update(scene_selector_t* selector, void* ctx_)
 
     if(ctx->mode == MODE_PLAYING || ctx->mode == MODE_FINISHED)
     {
-        const char* player1_s = ctx->player == PLAYER_1 ? "You" : "Opponent";
-        const char* player2_s = ctx->player == PLAYER_2 ? "You" : "Opponent";
+        const char* player1_s = get_player_text(PLAYER_1, ctx->player);
+        const char* player2_s = get_player_text(PLAYER_2, ctx->player);
 
         ui_draw_X(UI_RED_COLOR, (quartz_vec2){-300, 0}, 100);
         ui_text_draw_inline(ctx->font, 25, player1_s, (quartz_vec2){-300, -70}, UI_WHITE_COLOR);
@@ -372,3 +375,16 @@ static void scene_free(void* ctx_)
     free(ctx->server_name);
     memset(ctx, 0, sizeof(*ctx));
 }
+
+#define gen_player_to_string_func(NAME, STR_SUFFIX, ALLOW_NO_PLAYER, STR_NO_PLAYER)\
+const char* NAME(player_t player, player_t me)\
+{\
+    if((ALLOW_NO_PLAYER) && player == NO_PLAYER) return STR_NO_PLAYER;\
+    \
+    assert(player == PLAYER_1 || player == PLAYER_2);\
+    \
+    return player == me ? "You" STR_SUFFIX : "Opponent" STR_SUFFIX;\
+}
+
+static gen_player_to_string_func(get_player_text, "", false, "")
+static gen_player_to_string_func(get_winner_text, " Won", true, "Draw")
